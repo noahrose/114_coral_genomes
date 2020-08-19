@@ -15,4 +15,5 @@ realSFS fst print mafs/HC.HD.fst.idx | awk '{print $1":"$2"\t"$3/$4}' | sort -k1
 realSFS fst print mafs/HC.HE.fst.idx | awk '{print $1":"$2"\t"$3/$4}' | sort -k1,1 > HC.HE.snpfst.txt
 realSFS fst print mafs/HD.HE.fst.idx | awk '{print $1":"$2"\t"$3/$4}' | sort -k1,1 > HD.HE.snpfst.txt
 
-multijoin.sh *snpfst.txt snpEff.txt | grep "missense_variant\|synonymous_variant" > processed_data/snpfst_sns.txt
+multijoin.sh *snpfst.txt snpEff.sort.txt | grep "missense_variant\|synonymous_variant" > processed_data/snpfst_sns.txt
+multijoin.sh *snpfst.txt | gzip -c > processed_data/snpfst.txt.gz
