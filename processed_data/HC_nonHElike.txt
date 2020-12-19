@@ -1,0 +1,16 @@
+15.bam
+33.bam
+36.bam
+37.bam
+42.bam
+46.bam
+64.bam
+77.bam
+80.bam
+83.bam
+87.bam
+92.bam
+93.bam
+plate2_2.bam
+plate2_7.bam
+plate2_15.bam

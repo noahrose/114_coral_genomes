@@ -1,0 +1,4 @@
+17.bam
+34.bam
+plate2_1.bam
+plate2_11.bam

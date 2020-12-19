@@ -1,36 +1,112 @@
-colnames(tables2)<-c('SNP','HA.HC.FST','HA.HD.FST','HA.HE.FST','HC.HD.FST','HC.HE.FST','HD.HE.FST','Eff','gene','HA.PBS','HC.PBS','HD.PBS','HE.PBS')
-write.table(tables2,file='../Tables/TableS2.txt',quote=F,row.names=F,sep='\t')
-tables2(tables2$gene%in%genes$gene)
-head(genes)
-tables2[tables2$gene%in%genes$gene,]
-as.data.frame(tables2[tables2$gene%in%genes$gene,])
-as.data.frame(tables2[tables2$gene%in%genes$gene&tables2$missense,])
-as.data.frame(tables2[tables2$gene%in%genes$gene&tables2$Eff=='missense',])
-as.data.frame(tables2[tables2$gene%in%genes$gene&tables2$HE>1,])
-table(tables2$Eff)
-sns<-fread('snpfst_sns.txt.gz')
-head(sns)
-colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','gene')
-colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN')
-sns$gene<-sapply(sns$ANN,function(v) strsplit(v,'|')[[1]][4])
-sns$gene<-gsub('.*Amillepora','Amillepora',sns$ANN)
-head(sns)
-sns<-fread('snpfst_sns_nowarning.txt.gz')
-head(sns)
-sns<-fread('snpfst_sns_nowarning.txt.gz')
-head(sns)
-colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN')
-sns$gene<-gsub('.*Amillepora','Amillepora',sns$ANN)
-head(sns)
-sns$gene<-sapply(sns$ANN,strsplit(v)[[1]][4])
-sns$gene<-sapply(sns$ANN,function(v) strsplit(v)[[1]][4])
-sns$gene<-sapply(sns$ANN,function(v) strsplit(v,split='|')[[1]][4])
-sns<-fread('snpfst_sns_nowarning.txt.gz')
-head(sns)
+plot(tables2$HE)
+dev.off()
+plot(tables2$HE)
+head(tables2)
+tables2$chr<-sapply(tables2$SNP,function(s) strsplit(s,':')[[1]][1])
+head(tables2)
+tables2$chr<-factor(tables2$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
+tables2$chr[is.na(tables2$chr)]<-'unplaced'
+table(tables2$chr)
+tables2$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(tables2$chr)%%2]
+tables2$chrcol[tables2$chr=='unplaced']<-grey(0.7)
+tables2$chr<-factor(tables2$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
+tables2$chr[is.na(tables2$chr)]<-'unplaced'
+tables2$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(tables2$chr)%%2]
+tables2$chrcol[tables2$chr=='unplaced']<-grey(0.7)
+plot(tables2$HE,col=tables2$chrcol)
+png('../Figures/Figure1.png',width=6,height=6,res=300,units='in')#
+layout(rbind(c(1,1,1),c(2,3,4),c(5,6,7)))#
+par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,cex=0.5,bty='l',cex.main=1.5)#
+#
+crypcol= rainbow(100,v=0.8)[c(18,5,50,80)]#
+crypcols= crypcol[factor(meta$cryp)]#
+#
+#A#
+bp<-barplot(admix,col=crypcol,names.arg=rep('',ncol(admix)),las=1,ylab='Proportion ancestry')#
+mtext('HA',side=1,line=1,at=bp[7])#
+mtext('HC',side=1,line=1,at=bp[25])#
+mtext('HD',side=1,line=1,at=bp[50])#
+mtext('HE',side=1,line=1,at=bp[90])#
+title('A',adj=0)#
+#
+#B#
+#
+covmat<-as.matrix(read.delim('pcangsd.cov',header=F))#
+colnames(covmat)<-samps#
+rownames(covmat)<-samps#
+covmat<-covmat[match(meta$filename,rownames(covmat)),match(meta$filename,colnames(covmat))]#
+e<-eigen(covmat)#
+plot(e$vectors[,1],e$vectors[,2],col=crypcols,xlab='PC 1',ylab='PC 2')#
+title('B',adj=0)#
+#
+#C#
+#
+getTrees<-function(vec){#
+	v<-(-log(1-vec))#
+	dmat<-matrix(nrow=4,ncol=4)#
+	colnames(dmat)<-c('HA','HC','HD','HE')#
+	rownames(dmat)<-c('HA','HC','HD','HE')#
+	dmat[lower.tri(dmat)]<-v#
+	currdist<-as.dist(dmat)#
+	nj.out<-bionj(currdist)#
+	return(nj.out)#
+}#
+#
+globalfst<-read.delim('global_fst.txt',header=F,sep=' ')#
+globaltree<-getTrees(globalfst[,2])#
+globaltree$tip.label<-c('HA','HC','HD','HE')#
+plot(globaltree,type='u',cex=1, edge.width=2,lab4ut='axial') #
+segments(.05,0,.1,0,lwd=2)#
+text(0.075,0.01,label=expression(italic(T) == 0.05))#
+title('C',adj=0)#
+#D#
+seq<-ape::read.dna('ahy_mitosnps.fa',format='fasta')#
+meta2<-meta[match(labels(seq),meta$filename),]#
+table(labels(seq)==meta2$filename)#
+d<-dist.dna(seq)#
+hc<-(hclust(d))#
+cut<-cutree(hc,k=2)#
+meta$mitotype<-cut[match(meta$filename,meta2$filename)]#
+#
+h<-pegas::haplotype(seq)#
+h<-sort(h,what='label')#
+labs=labels(h)#
+l<-rep(NA,nrow(seq))#
+for(i in 1:length(labs)){#
+	l[attr(h,'index')[[i]]]<-labs[i]#
+}#
+sp=table(l,meta2$cryp)#
+net<-pegas::haploNet(h)#
+table(attr(net,'labels')==rownames(sp))#
+attr(net,'alter.links')<-NULL#
+#
+plot(net,size=attr(net,'freq')**.5,pie=sp,show.mutation=2,scale.ratio=1,fast=F,labels=F,bg=crypcol)#
+legend('topleft',legend=c('HA','HC','HD','HE'),fill=crypcol,bty='n')#
+title('D',adj=0)#
+par(xpd=F)#
+text(0,-10,label='HG1')#
+text(30,-10,label='HG2')#
+#E#
+plot(jitter(as.numeric(factor(meta$cryp))),meta$propd,axes=F,xlab='Species',ylab=expression(paste("Proportion",italic(" Durusdinium")," symbionts")),type='n',cex=1,ylim=c(0,1),las=1,cex.axis=1)#
+axis(1,at=1:4,labels=c('HA','HC','HD','HE'))#
+axis(2)#
+box(bty='l')#
+abline(h=0.5,lwd=2,lty=2)#
+points(jitter(as.numeric(factor(meta$cryp))),meta$propd,col=crypcols,cex=1)#
+#
+title('E',adj=0)#
+#
+#F#
+getPBS<-function(focal.ref,focal.out,ref.out){#
+	T1=-log(1-focal.ref)#
+	T2=-log(1-focal.out)#
+	T3=-log(1-ref.out)#
+	PBS=(T1+T2-T3)/2#
+	PBS[PBS<0]<-0#
+	return(PBS)#
+}#
 sns<-fread('snpfst_sns_nowarning.txt.gz')#
-head(sns)#
 colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')#
-sns$gene<-sapply(sns$ANN,function(v) strsplit(v,split='|')[[1]][4])#
 sns$HA<-getPBS(sns$HA.HE,sns$HA.HD,sns$HD.HE)#
 sns$HC<-getPBS(sns$HC.HD,sns$HC.HE,sns$HD.HE)#
 sns$HD<-getPBS(sns$HC.HD,sns$HD.HE,sns$HC.HE)#
@@ -43,22 +119,8 @@ HE<-fisher.test(sns$HE> quantile(sns$HE,0.95),sns$Eff=='missense')#
 tables2<-sns[sns$HE> quantile(sns$HE,0.95),c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','HA','HC','HD','HE','gene','Eff')]#
 tables2<-tables2[order(gsub(':.*','',gsub('chr','',tables2$SNP))),]#
 colnames(tables2)<-c('SNP','HA.HC.FST','HA.HD.FST','HA.HE.FST','HC.HD.FST','HC.HE.FST','HD.HE.FST','HA.PBS','HC.PBS','HD.PBS','HE.PBS','gene','Eff')#
-write.table(tables2,file='../Tables/TableS2.txt',quote=F,row.names=F,sep='\t')
-sns<-fread('snpfst_sns_nowarning.txt.gz')
-colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')
-sns$gene<-sapply(sns$ANN,function(v) strsplit(v,split='|')[[1]][4])
-sns$HA<-getPBS(sns$HA.HE,sns$HA.HD,sns$HD.HE)
-sns$HC<-getPBS(sns$HC.HD,sns$HC.HE,sns$HD.HE)
-sns$HD<-getPBS(sns$HC.HD,sns$HD.HE,sns$HC.HE)
-sns$HE<-getPBS(sns$HC.HE,sns$HD.HE,sns$HC.HD)
-HA<-fisher.test(sns$HA> quantile(sns$HA,0.95),sns$Eff=='missense')
-HC<-fisher.test(sns$HC> quantile(sns$HC,0.95),sns$Eff=='missense')
-HD<-fisher.test(sns$HD> quantile(sns$HD,0.95),sns$Eff=='missense')
-HE<-fisher.test(sns$HE> quantile(sns$HE,0.95),sns$Eff=='missense')
-tables2<-sns[sns$HE> quantile(sns$HE,0.95),c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','HA','HC','HD','HE','gene','Eff')]#
-tables2<-tables2[order(gsub(':.*','',gsub('chr','',tables2$SNP))),]#
-colnames(tables2)<-c('SNP','HA.HC.FST','HA.HD.FST','HA.HE.FST','HC.HD.FST','HC.HE.FST','HD.HE.FST','HA.PBS','HC.PBS','HD.PBS','HE.PBS','gene','Eff')#
-write.table(tables2,file='../Tables/TableS2.txt',quote=F,row.names=F,sep='\t')
+write.table(tables2,file='../Tables/TableS2.txt',quote=F,row.names=F,sep='\t')#
+#
 ors<-cbind(HA$estimate,HC$estimate,HD$estimate,HE$estimate)#
 errs<-rbind(HA$conf.int,HC$conf.int,HD$conf.int,HE$conf.int)#
 ortab<-matrix(0,4,4)#
@@ -69,528 +131,442 @@ ortab[4,4]<-ors[4]#
 bp<-barplot(ortab,ylim=c(0,1.2),col=crypcol,border=NA,names.arg=c('HA','HC','HD','HE'),las=1,ylab='NS vs. S outlier odds ratio',cex.names=1)#
 segments(bp,errs[,1],bp,errs[,2],lwd=2)#
 abline(h=1,lwd=2,lty=3)#
-title('F',adj=0)
-read.delim('amil.picard')
-amil<-read.delim('amil.picard')
-head(amil)
-sum(amil$PF_HQ_ALIGNED_READS)
-head(goodcov)
-hist(amil$PF_HQ_ALIGNED_BASES)
-mean(amil$PF_HQ_ERROR_RATE)
-amil<-read.delim('altref.picard')
-amil<-read.delim('amil.picard')
-sum(amil$PF_HQ_ALIGNED_READS)
-mean(amil$PF_HQ_ERROR_RATE)
-altref<-read.delim('altref.picard')
-sum(altref$PF_HQ_ALIGNED_READS)
-mean(altref$PF_HQ_ERROR_RATE)
-L1
-g7
-genes$description<-annot[match(genes$gene,annot[,1]),9]
-g7<-genes[genes[,1]=='chr7',]
-g7<-g7[order(g7[,4]),]
-g7$height<-rep(c(2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(g7)]
-g7
-head(annot)
-genes$description<-annot[match(genes$gene,annot[,1]),13]
-g7<-genes[genes[,1]=='chr7',]
-g7<-g7[order(g7[,4]),]
-g7$height<-rep(c(2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(g7)]
-g7
-head(sns)
-out<-strsplit(sns$SNP,split=':')
-head(out)
-sapply(split,'[[')
-sapply(split,'[[1]]')
-unlist(split)
-unlist(out)
-split<-unlist(strsplit(sns$SNP,split=':'))
-sns$chr[seq(1,length(split),2)]
-out<-unlist(strsplit(sns$SNP,split=':'))
-sns$chr<-out[seq(1,length(split),2)]
-head(sns)
-sns$pos<-out[seq(2,length(split),2)]
-sns$pos<-as.numeric(out[seq(2,length(split),2)])
-sns[sns$chr=='chr7'&sns$pos>20350000&sns$pos<20570000,]
-table(sns[sns$chr=='chr7'&sns$pos>20350000&sns$pos<20570000,'Eff'])
-sns2<-fread('snpfst_sns_warning.txt.gz')
-colnames(sns2)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')
-sns2$HA<-getPBS(sns2$HA.HE,sns2$HA.HD,sns2$HD.HE)
-sns2$HC<-getPBS(sns2$HC.HD,sns2$HC.HE,sns2$HD.HE)
-sns2$HD<-getPBS(sns2$HC.HD,sns2$HD.HE,sns2$HC.HE)
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)
-sns3<-rbind(sns,sns2)
-head(sns)
-head(sns2)
-sns2<-fread('locus1_sns.txt')
-head(sns2)
-sns2$Eff<-'synonymous'
-sns2$Eff[grepl('missense_variant',sns2[,9])]<-'missense'
-head(sns2)
-grepl('missense_variant',sns2[,9])
-sns2[,9]
-grepl('missense_variant',sns2[,9])
-sns2[,9]
-sns2[,V9]
-grepl('missense_variant',sns2[,V9])
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'
-head(sns2)
-sns2$Eff<-'synonymous'
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'
-table(sns2$Eff)
-dim(sns2$Eff)
-table(sns2$Eff)
-dim(sns2)
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)
-table(sns2$HE>quantile(sns$HE,0.95))
-quantile(sns$HE,0.95)
-sns2$HE
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)
-colnames(sns2)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN')
-sns2<-fread('locus1_sns.txt')
-sns2$Eff<-'synonymous'
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'
-colnames(sns2)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','Eff')
-head(sns)
-sns2<-fread('locus1_sns.txt')
-sns2$Eff<-'synonymous'
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'
-head(sns2)
-colnames(sns2)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','Eff')
-colnames(sns2)<-c('chr','pos','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','Eff')
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)
-table(sns2$Eff)
-table(sns2$eff,sns2$HE>quantile(sns$HE,0.95))
-quantile(sns$HE,0.95)
-sns2$HE
-table(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))
-fisher.test(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))
-head(sns2)
-sns2[grep('WARNING',sns2$ANN),]
-sns2[sns2$missense&grepl('WARNING',sns2$ANN),]
-sns2[sns2$Eff=='missense'&grepl('WARNING',sns2$ANN),]
-as.data.frame(sns2[sns2$Eff=='missense'&grepl('WARNING',sns2$ANN),])
-gs
-dim(gs)
-dim(g7)
-g7
-gs
-gs<-genes[genes[,1]=='Sc0000015',]
-gs<-gs[order(gs[,4]),]
-gs
-gs[gs$gene2=='gene 27759','annot']<-'NDUFA10'
-g7
-sns
-sns12
-sns2
-sns2[sns2$Eff=='missense'&grepl('WARNING',sns2$ANN),]
-data.frame(sns2[sns2$Eff=='missense'&grepl('WARNING',sns2$ANN),])
-data.frame(sns2[sns2$Eff=='missense'&grepl('WARNING',sns2$ANN),'ANN'])
-gs
-gs[gs$gene2=='gene 27759','annot']<-'NDUFA10'
-gs
-gs$gene2=='gene 27759'
-gs$gene2
-gs[gs$gene2=='gene 27759 ','annot']<-'NDUFA10'
-gs
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs[gs$gene2=='gene 27759 ','annot']<-'NDUFA10'#
-gs[gs$gene2=='gene 27763 ','annot']<-'MULE'#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)#
-amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)#
-ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]#
-ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip#
-max(c(ahy2amil[,11]),c(amil2ahy[,11]))#
-de<-read.delim('HEvsHC_DE_contigs.txt',header=F)#
-ahy2amil$de<-ahy2amil[,1]%in%de[,1]#
-annot<-read.delim('~/Downloads/Amil_v2.01/Amillepora_euk.emapper.annotations',comment.char='#',header=F)#
-genes<-read.delim('outlier_genes.bed',header=F)#
-genes$gene<-gsub(';Name=.*','',gsub("ID=",'',genes[,9]))#
-genes$de<-genes$gene%in%gsub('-RA','',ahy2amil[ahy2amil$de,2])#
-genes$gene2<-gsub('Amillepora','gene ',gsub(';Name=.*','',gsub("ID=",'',genes[,9])))#
-genes[genes$gene2=='gene 27759 ','annot']<-'NDUFA10'#
-genes[genes$gene2=='gene 27763 ','annot']<-'MULE'#
-genes$annot<-annot[match(genes$gene,annot[,1]),5]#
-genes$annot[is.na(genes$annot)]<-''#
-genes$description<-annot[match(genes$gene,annot[,1]),13]#
-genes$gene2<-paste(genes$gene2,genes$annot)#
-PBS$HEwin<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges,k=1)#
+title('F',adj=0)#
 #
-##########
-sns2<-fread('locus1_sns.txt')#
-sns2$Eff<-'synonymous'#
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'#
-colnames(sns2)<-c('chr','pos','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','Eff')#
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)#
+quantile(sns$HE,0.95)#
+table(sns$HE>quantile(sns$HE,0.95))#
+length(unique(unlist(sns[sns$HE>quantile(sns$HE,0.95),'gene'])))#
 #
-table(sns2$Eff)#
-table(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))#
-fisher.test(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(2,2))#
-#
-L1<-PBS[PBS$chr=='chr7'&PBS$start>=20250000&PBS$start<20670000,]#
-plot(L1$start,L1$HEwin,type='l',ylab='HE PBS',xlab='Chromosome 7 position (Mb)',ylim=c(0,4.5),xlim=c(20250000, 20670000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(20300000,20600000,by=100000),labels=seq(20300000,20600000,by=100000)/1000000)#
-g7<-genes[genes[,1]=='chr7',]#
-g7<-g7[order(g7[,4]),]#
-g7$height<-rep(c(2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(g7)]#
-segments(g7[,4],g7$height,g7[,5],g7$height)#
-text((g7[,4]+g7[,5])/2,g7$height+0.1,labels=g7$gene2,cex=0.5,font=1+as.numeric(g7$de))#
-title('A',adj=0)
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-bleachcol<-crypcols#
-bleachcol[meta$binbl==1]<-grey(0.9)#
-plot(jitter(as.numeric(meta$cryp)),e1$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='Locus 1 PC1 (62% of variation)',xlab='Cryptic species')#
-axis(1,at=1:4,labels=c('HA','HC','HD','HE'),lwd=0)#
-axis(2,at=c(-0.1,0,0.1))#
-title('C',adj=0)#
-legend('top',legend='bleached',fill=grey(0.95),bty='n')
-plot(jitter(as.numeric(meta$cryp)),e2$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='Locus 2 PC1 (70% of variation)',xlab='Cryptic species')#
-axis(1,at=1:4,labels=c('HA','HC','HD','HE'),lwd=0)#
-axis(2,at=c(-0.1,0,0.1))#
-title('D',adj=0)#
-#
-legend('top',legend='bleached',fill=grey(0.95),bty='n')#
-arrows(1.6,0.03,1.3,0.05,length=0.05,lwd=1)#
-arrows(1.6,0.02,1.3,0,length=0.05,lwd=1)#
-arrows(2.6,-0.03,2.3,-0.03,length=0.05,lwd=1)#
-arrows(3.6,-0.05,3.3,-0.05,length=0.05,lwd=1)
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-gs
-ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)#
-amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)#
-ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]#
-ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip#
-max(c(ahy2amil[,11]),c(amil2ahy[,11]))#
-de<-read.delim('HEvsHC_DE_contigs.txt',header=F)#
-ahy2amil$de<-ahy2amil[,1]%in%de[,1]#
-annot<-read.delim('~/Downloads/Amil_v2.01/Amillepora_euk.emapper.annotations',comment.char='#',header=F)#
-genes<-read.delim('outlier_genes.bed',header=F)#
-genes$gene<-gsub(';Name=.*','',gsub("ID=",'',genes[,9]))#
-genes$de<-genes$gene%in%gsub('-RA','',ahy2amil[ahy2amil$de,2])#
-genes$gene2<-gsub('Amillepora','gene ',gsub(';Name=.*','',gsub("ID=",'',genes[,9])))#
-genes[genes$gene2=='gene 27759','annot']<-'NDUFA10'#
-genes[genes$gene2=='gene 27763','annot']<-'MULE'#
-genes$annot<-annot[match(genes$gene,annot[,1]),5]#
-genes$annot[is.na(genes$annot)]<-''#
-genes$description<-annot[match(genes$gene,annot[,1]),13]#
-genes$gene2<-paste(genes$gene2,genes$annot)#
-PBS$HEwin<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges,k=1)
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-gs
-genes$gene2=='gene 27759'
-genes$gene2
-genes[genes$gene=='Amillepora27759','annot']<-'NDUFA10'
-genes[genes$gene=='Amillepora27763','annot']<-'MULE'
-genes
-ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)#
-amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)#
-ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]#
-ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip#
-max(c(ahy2amil[,11]),c(amil2ahy[,11]))#
-de<-read.delim('HEvsHC_DE_contigs.txt',header=F)#
-ahy2amil$de<-ahy2amil[,1]%in%de[,1]#
-annot<-read.delim('~/Downloads/Amil_v2.01/Amillepora_euk.emapper.annotations',comment.char='#',header=F)#
-genes<-read.delim('outlier_genes.bed',header=F)#
-genes$gene<-gsub(';Name=.*','',gsub("ID=",'',genes[,9]))#
-genes$de<-genes$gene%in%gsub('-RA','',ahy2amil[ahy2amil$de,2])#
-genes$gene2<-gsub('Amillepora','gene ',gsub(';Name=.*','',gsub("ID=",'',genes[,9])))#
-genes[genes$gene=='Amillepora27759','annot']<-'NDUFA10'#
-genes[genes$gene=='Amillepora27763','annot']<-'MULE'#
-genes$annot<-annot[match(genes$gene,annot[,1]),5]#
-genes$annot[is.na(genes$annot)]<-''#
-genes$description<-annot[match(genes$gene,annot[,1]),13]#
-genes$gene2<-paste(genes$gene2,genes$annot)#
-PBS$HEwin<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges,k=1)
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(2,2))#
-#
-L1<-PBS[PBS$chr=='chr7'&PBS$start>=20250000&PBS$start<20670000,]#
-plot(L1$start,L1$HEwin,type='l',ylab='HE PBS',xlab='Chromosome 7 position (Mb)',ylim=c(0,4.5),xlim=c(20250000, 20670000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(20300000,20600000,by=100000),labels=seq(20300000,20600000,by=100000)/1000000)#
-g7<-genes[genes[,1]=='chr7',]#
-g7<-g7[order(g7[,4]),]#
-g7$height<-rep(c(2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(g7)]#
-segments(g7[,4],g7$height,g7[,5],g7$height)#
-text((g7[,4]+g7[,5])/2,g7$height+0.1,labels=g7$gene2,cex=0.5,font=1+as.numeric(g7$de))#
-title('A',adj=0)#
-#
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-genes
-ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)#
-amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)#
-ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]#
-ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip#
-max(c(ahy2amil[,11]),c(amil2ahy[,11]))#
-de<-read.delim('HEvsHC_DE_contigs.txt',header=F)#
-ahy2amil$de<-ahy2amil[,1]%in%de[,1]#
-annot<-read.delim('~/Downloads/Amil_v2.01/Amillepora_euk.emapper.annotations',comment.char='#',header=F)#
-genes<-read.delim('outlier_genes.bed',header=F)#
-genes$gene<-gsub(';Name=.*','',gsub("ID=",'',genes[,9]))#
-genes$de<-genes$gene%in%gsub('-RA','',ahy2amil[ahy2amil$de,2])#
-genes$gene2<-gsub('Amillepora','gene ',gsub(';Name=.*','',gsub("ID=",'',genes[,9])))#
-genes$annot<-annot[match(genes$gene,annot[,1]),5]#
-genes$annot[is.na(genes$annot)]<-''#
-genes$description<-annot[match(genes$gene,annot[,1]),13]#
-genes$gene2<-paste(genes$gene2,genes$annot)#
-genes[genes$gene=='Amillepora27759','annot']<-'NDUFA10'#
-genes[genes$gene=='Amillepora27763','annot']<-'MULE'#
-PBS$HEwin<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges,k=1)
-genes
-L1<-PBS[PBS$chr=='chr7'&PBS$start>=20250000&PBS$start<20670000,]#
-plot(L1$start,L1$HEwin,type='l',ylab='HE PBS',xlab='Chromosome 7 position (Mb)',ylim=c(0,4.5),xlim=c(20250000, 20670000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(20300000,20600000,by=100000),labels=seq(20300000,20600000,by=100000)/1000000)#
-g7<-genes[genes[,1]=='chr7',]#
-g7<-g7[order(g7[,4]),]#
-g7$height<-rep(c(2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(g7)]#
-segments(g7[,4],g7$height,g7[,5],g7$height)#
-text((g7[,4]+g7[,5])/2,g7$height+0.1,labels=g7$gene2,cex=0.5,font=1+as.numeric(g7$de))#
-title('A',adj=0)
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-genes
-ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)#
-amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)#
-ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]#
-ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip#
-max(c(ahy2amil[,11]),c(amil2ahy[,11]))#
-de<-read.delim('HEvsHC_DE_contigs.txt',header=F)#
-ahy2amil$de<-ahy2amil[,1]%in%de[,1]#
-annot<-read.delim('~/Downloads/Amil_v2.01/Amillepora_euk.emapper.annotations',comment.char='#',header=F)#
-genes<-read.delim('outlier_genes.bed',header=F)#
-genes$gene<-gsub(';Name=.*','',gsub("ID=",'',genes[,9]))#
-genes$de<-genes$gene%in%gsub('-RA','',ahy2amil[ahy2amil$de,2])#
-genes$gene2<-gsub('Amillepora','gene ',gsub(';Name=.*','',gsub("ID=",'',genes[,9])))#
-genes$annot<-annot[match(genes$gene,annot[,1]),5]#
-genes$annot[is.na(genes$annot)]<-''#
-genes$description<-annot[match(genes$gene,annot[,1]),13]#
-genes[genes$gene=='Amillepora27759','annot']<-'NDUFA10'#
-genes[genes$gene=='Amillepora27763','annot']<-'MULE'#
-genes$gene2<-paste(genes$gene2,genes$annot)
-genes
-genes$gene2
-L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<=2650000,]#
-plot(L2$start,L2$HEwin,type='l',ylab='HE PBS',xlab='Sc0000015 position (Mb)',ylim=c(0,4.5),xlim=c(2300000, 2650000),axes=F)#
-axis(2,at=c(0:3))#
-axis(1,at=seq(2340000, 2650000,by=100000),labels=seq(2340000, 2650000,by=100000)/1000000)#
-gs<-genes[genes[,1]=='Sc0000015',]#
-gs<-gs[order(gs[,4]),]#
-gs$height<-rep(seq(1.1,1.6,.1),10)[1:nrow(gs)]#
-gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]#
-segments(gs[,4],gs$height,gs[,5],gs$height)#
-text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))#
-title('B',adj=0)
-cor(tmf$loc,tmf[,2])
-cor(tmf$loc,tmf[,2],use='p')
-par(mar=c(3,2,1,1),tck=-0.01,mgp=c(1.1,.1,0),bty='l')
-plot(tmf$loc,tmf[,2],bg='black',col=crypcols[match(tmf[,1],as.character(meta$tag))],pch=19,xlab='PC1 Locus 2',ylab='TMF norm. counts')
-abline(lm(tmf[,2]~tmf$loc),lwd=2,lty=2)
-legend('topleft',legend=c('HC','HE'),fill=crypcol[c(2,4)],bty='n')
-lm(lmf[,2]~tmf$cryp+tmf$loc)
-lm(tmf[,2]~tmf$cryp+tmf$loc)
-anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
-png('../Figures/FigureS4.png',width=6,height=6,res=300,units='in')#
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(rbind(c(1,1),c(2,3)))#
-#
-plot(symfst$fst,col=symfst$chrcol,ylab=expression(F[ST]),xlab='Genomic position  (100 kb window, 10 kb step)')#
-points(which(symfst$outl),symfst$fst[symfst$outl],col=symfst$chrcol[symfst$outl])#
-text(43000,0.55,labels=c('xfSc0000366'),cex=0.7)#
-symfst[which.max(symfst$fst),]#
-covmat<-1000000*t(as.matrix(idx[,3:116]))/colSums(idx[,3:116])#
-title('A',adj=0)#
-#
-plot(covmat[,idx[,1]=='xfSc0000366'],propd,ylab='Proportion sym. D',xlab='xfSc0000366 reads per million')#
-cor.test(covmat[,idx[,1]=='xfSc0000366'],propd)#
-title('B',adj=0)#
-#
-plot(meta$oldsym,meta$propd,xlab='2011 proportion D',ylab='2015 proportion D',pch=21,col=crypcols,bg=bleachcol,ylim=c(0,1),xlim=c(0,1))#
-legend(.65,.45,legend=bquote(italic(R)^2 == .(format(summary(lm(meta$propd~meta$oldsym))$r.squared, digits = 2))),bty='n')#
-legend('right',legend='bleached',fill=grey(0.95),bty='n',cex=0.8)#
-abline(0,1,lwd=2,lty=2)#
-title('C',adj=0)#
-#
+quantile(sns$HE,0.99)#
+table(sns$HE>quantile(sns$HE,0.99))#
+length(unique(unlist(sns[sns$HE>quantile(sns$HE,0.99),'gene'])))#
+#G#
+bl<-table(meta$binbl,interaction(meta$cryp,meta$propd>0.5))#
+bltab<-matrix(0,5,8)#
+bltab[5,]<-bl[2,]#
+bltab[1,c(1,5)]<-bl[1,c(1,5)]#
+bltab[2,c(2,6)]<-bl[1,c(2,6)]#
+bltab[3,c(3,7)]<-bl[1,c(3,7)]#
+bltab[4,c(4,8)]<-bl[1,c(4,8)]#
+bp<-barplot(bltab,col=c(crypcol,grey(0.95)),names.arg=c('HA','HC','HD','HE','HA','HC','HD','HE'),cex.names=1,ylab='Count',las=2)#
+mtext('Sym. C',at=mean(bp[2:3]),side=1,las=1,line=1.5,cex=0.7)#
+mtext('Sym. D',at=mean(bp[6:7]),side=1,las=1,line=1.5,cex=0.7)#
+legend('topleft',fill=grey(0.95),legend='bleached',bty='n')#
+title('G',adj=0)#
 dev.off()
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(rbind(c(1,1,1),c(2,3,4)))#
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5)#
-axis(2)#
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)#
-axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)#
-title('A',adj=0)
-text(30000,1.5,labels='Locus 1')
+unique(tables2$chr)
+tables2$chr<-sapply(tables2$SNP,function(s) strsplit(s,':')[[1]][1])#
+tables2$chr<-factor(tables2$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))#
+tables2$chr[is.na(tables2$chr)]<-'unplaced'#
+tables2$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(tables2$chr)%%2]#
+tables2$chrcol[tables2$chr=='unplaced']<-grey(0.7)#
+plot(tables2$HE,col=tables2$chrcol)
+unique(tables2$chr)
+snps<-fread('snpfst_sns_warning.txt.gz')
+dim(snps)
+dim(tables2)
+head(snps)
+head(tables2)
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chr[is.na(snps$chr)]<-'unplaced'
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps<-fread('snpfst_sns_warning.txt.gz')
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chr<-factor(snps$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
+snps$chr[is.na(snps$chr)]<-'unplaced'
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chr)%%2]
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)
+plot(snps$HE,col= snps$chrcol)
+sns$HE<-getPBS(sns$HC.HE,sns$HD.HE,sns$HC.HD)
+snps$HE<-getPBS(snps$HC.HE, snps$HD.HE, snps$HC.HD)
+plot(snps$HE,col= snps$chrcol)
+head(snps)
+snps<-fread('snpfst_sns_warning.txt.gz')
+colnames(snps)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chr<-factor(snps$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
+snps$chr[is.na(snps$chr)]<-'unplaced'
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chr)%%2]
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)
+snps$HE<-getPBS(snps$HC.HE,snps$HD.HE, snps$HC.HD)
+plot(snps$HE,col= snps$chrcol)
+head(snps)
+snps$pos<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2])
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))
+head(snps)
+tail(snps)
+snps<-fread('snpfst_sns_warning.txt.gz')#
+colnames(snps)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')#
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])#
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))#
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))
+snps$chrnum<-(gsub('chr','',snps$chr))
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))
+snps<-snps[order(snps$chr,snps$pos),]
+head(snps)
+tail(snps)
+unique(snps$chre)
+unique(snps$chr)
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chr<-(gsub('chr','',snps$chr))
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))
+snps<-snps[order(snps$chr,snps$pos),]
+head(snps)
+tail(snps)
+snps$chr[is.na(as.numeric(snps$chr))]<-'unplaced'
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chr)%%2]
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)
+snps$HE<-getPBS(snps$HC.HE,snps$HD.HE, snps$HC.HD)
+plot(snps$HE,col= snps$chrcol)
+snps[snps$chr==7,]
+snps[snps$chr==7&snps$HE>3,]
+snps[snps$chr==7&snps$HE>4,]
+HA.HC<-read.delim('HA.HC.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HA.HD<-read.delim('HA.HD.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HA.HE<-read.delim('HA.HE.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HC.HD<-read.delim('HC.HD.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HC.HE<-read.delim('HC.HE.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HD.HE<-read.delim('HD.HE.fst.components.txt',row.names=NULL,header=F,col.names=c('chr','start','stop','num','den','nSites'),na.strings='.')#
+HA.HC$pos<-paste(HA.HC$chr,HA.HC$start,sep=':')#
+HA.HD$pos<-paste(HA.HD$chr,HA.HD$start,sep=':')#
+HA.HE$pos<-paste(HA.HE$chr,HA.HE$start,sep=':')#
+HC.HD$pos<-paste(HC.HD$chr,HC.HD$start,sep=':')#
+HC.HE$pos<-paste(HC.HE$chr,HC.HE$start,sep=':')#
+HD.HE$pos<-paste(HD.HE$chr,HD.HE$start,sep=':')#
+postab<-table(c(HA.HC$pos,HA.HD$pos,HA.HE$pos,HC.HD$pos,HC.HE$pos,HD.HE$pos))#
+overlap<-names(postab[postab==6])#
+HA.HC<-HA.HC[HA.HC$pos%in%overlap,]#
+HA.HD<-HA.HD[HA.HD$pos%in%overlap,]#
+HA.HE<-HA.HE[HA.HE$pos%in%overlap,]#
+HC.HD<-HC.HD[HC.HD$pos%in%overlap,]#
+HC.HE<-HC.HE[HC.HE$pos%in%overlap,]#
+HD.HE<-HD.HE[HD.HE$pos%in%overlap,]#
+winpos<-HA.HC$pos
+getPBSwin<-function(focal.ref,focal.out,ref.out,k=10,edges){#
+	T1=-log(1-rollapply(focal.ref$num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(focal.ref$den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	T2=-log(1-rollapply(focal.out $num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(focal.out $den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	T3=-log(1-rollapply(ref.out $num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(ref.out $den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	PBS=(T1+T2-T3)/2#
+	PBS[edges]<-NA#
+	return(PBS)#
+}#
+#
+PBS<-data.frame(row.names=paste(HA.HC$chr,HA.HC$start,sep=':'),chr=HA.HC$chr)#
+PBS$chr<-factor(PBS$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))#
+PBS$chr[is.na(PBS$chr)]<-'unplaced'#
+PBS$HA<-getPBSwin(HA.HE, HA.HD, HD.HE,edges=edges)#
+PBS$HC<-getPBSwin(HC.HD, HC.HE, HD.HE,edges=edges)#
+PBS$HD<-getPBSwin(HC.HD, HD.HE, HC.HE,edges=edges)#
+PBS$HE<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges)#
+PBS$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(PBS$chr)%%2]#
+PBS$chrcol[PBS$chr=='unplaced']<-grey(0.7)#
+PBS$chrcolsave<-PBS$chrcol
+edges<-c()#
+for(chr in unique(HA.HE$chr)){#
+	curr<-which(HA.HE$chr==chr)#
+	if(length(curr)<10){#
+		edges<-c(edges,curr)#
+		next#
+	}#
+	edges<-c(edges,curr[1:5],curr[(length(curr)-4):length(curr)])#
+}#
+#
+getPerm<-function(df1,df2,df3,pis,edges,reps=10,k=10){#
+	perms<-replicate(reps,{#
+		shuf<-shuffle(length(pis),control=how(blocks=cut(pis,quantile(pis,seq(0,1,0.1),na.rm=T))))#
+		getPBSwin(df1[shuf,],df2[shuf,],df3[shuf,],k=k,edges=edges)#
+	})#
+	return(perms)#
+}#
+#
+getPBSwin<-function(focal.ref,focal.out,ref.out,k=10,edges){#
+	T1=-log(1-rollapply(focal.ref$num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(focal.ref$den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	T2=-log(1-rollapply(focal.out $num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(focal.out $den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	T3=-log(1-rollapply(ref.out $num,FUN=mean,width=k,na.rm=T,fill=NA)/rollapply(ref.out $den,FUN=mean,width=k,na.rm=T, fill=NA))#
+	PBS=(T1+T2-T3)/2#
+	PBS[edges]<-NA#
+	return(PBS)#
+}#
+#
+PBS<-data.frame(row.names=paste(HA.HC$chr,HA.HC$start,sep=':'),chr=HA.HC$chr)#
+PBS$chr<-factor(PBS$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))#
+PBS$chr[is.na(PBS$chr)]<-'unplaced'#
+PBS$HA<-getPBSwin(HA.HE, HA.HD, HD.HE,edges=edges)#
+PBS$HC<-getPBSwin(HC.HD, HC.HE, HD.HE,edges=edges)#
+PBS$HD<-getPBSwin(HC.HD, HD.HE, HC.HE,edges=edges)#
+PBS$HE<-getPBSwin(HA.HE, HD.HE, HA.HD,edges=edges)#
+PBS$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(PBS$chr)%%2]#
+PBS$chrcol[PBS$chr=='unplaced']<-grey(0.7)#
+PBS$chrcolsave<-PBS$chrcol
+PBS[PBS$chr=='Sc0000015',]
+head(PBS)
+PBS[PBS$chr=='unplaced',]
+head(PBS[PBS$chr=='unplaced',])
+head(PBS[PBS$chr=='unplaced',],n=100)
+head(PBS[PBS$chr=='unplaced',],n=200)
+head(PBS[PBS$chr=='unplaced',],n=300)
+head(PBS)
+load('perms.Rdata')
+outlpadjHA<-p.adjust(2*pmin((1-ecdf.outl(PBS$HA)),ecdf.outl(PBS$HA)),method='BH')
+outlpadjHC<-p.adjust(2*pmin((1-ecdf.outl(PBS$HC)),ecdf.outl(PBS$HC)),method='BH')
+outlpadjHD<-p.adjust(2*pmin((1-ecdf.outl(PBS$HD)),ecdf.outl(PBS$HD)),method='BH')
+outlpadjHE<-p.adjust(2*pmin((1-ecdf.outl(PBS$HE)),ecdf.outl(PBS$HE)),method='BH')
+PBS$colchrom<-rainbow(11,v=0.8)[1+as.numeric(factor(HA.HC$chr))%%11]#
+overplot<-which(outlpadjHE<0.05&PBS$HE>mean(PBS$HE,na.rm=T))#
+PBS$chrcol[overplot]<-PBS$colchrom[overplot]#
+PBS$chrnum<-(as.numeric(gsub('chr','',PBS$chr)))#
+PBS$chrnum[is.na(PBS$chrnum)]<-15#
+PBS$start<-HA.HC$start
+PBS$HAcol=PBS$chrcolsave#
+HAover<-which(outlpadjHA<0.05&PBS$HA>mean(PBS$HA,na.rm=T))#
+PBS$HAcol[HAover]<-PBS$colchrom[HAover]#
+PBS$HCcol=PBS$chrcolsave#
+HCover<-which(outlpadjHC<0.05&PBS$HC>mean(PBS$HC,na.rm=T))#
+PBS$HCcol[HCover]<-PBS$colchrom[HCover]#
+PBS$HDcol=PBS$chrcolsave#
+HDover<-which(outlpadjHD<0.05&PBS$HD>mean(PBS$HD,na.rm=T))#
+PBS$HDcol[HDover]<-PBS$colchrom[HDover]#
+PBS$HAoutl<-outlpadjHA<0.05&PBS$HA>mean(PBS$HA,na.rm=T)#
+PBS$HCoutl<-outlpadjHC<0.05&PBS$HC>mean(PBS$HC,na.rm=T)#
+PBS$HDoutl<-outlpadjHD<0.05&PBS$HD>mean(PBS$HD,na.rm=T)#
+PBS$HEoutl<-outlpadjHE<0.05&PBS$HE>mean(PBS$HE,na.rm=T)
+HAwin<-t(sapply(winpos[HAover],function(v) c(strsplit(v,split=':')[[1]])))#
+HAbed<-cbind(HAwin[,1],as.numeric(HAwin[,2])-50000,as.numeric(HAwin[,2])+50000)#
+HCwin<-t(sapply(winpos[HCover],function(v) c(strsplit(v,split=':')[[1]])))#
+HCbed<-cbind(HCwin[,1],as.numeric(HCwin[,2])-50000,as.numeric(HCwin[,2])+50000)#
+HEwin<-t(sapply(winpos[overplot],function(v) c(strsplit(v,split=':')[[1]])))#
+HEbed<-cbind(HEwin[,1],as.numeric(HEwin[,2])-50000,as.numeric(HEwin[,2])+50000)
+HEbed
 overplot
-text(29900,labels='Locus 1')
-which(plotPBS$HEoutl)
-text(19600,labels='Locus 1')
-text(19600,1.5,labels='Locus 1')
-text(19600,2,labels='Locus 1')
-text(19600,1.5,labels='Locus 1')
-text(19600,1.6,labels='Locus 1')
-text(19600,1.7,labels='Locus 1')
-text(19600,1.75,labels='Locus 1')
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))
-axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
-axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
-title('A',adj=0)
-text(19600,1.75,labels='Locus 1')
-text(34100,1.75,labels='Locus 2')
-text(34100,1,labels='Locus 2')
-text(34100,1.05,labels='Locus 2')
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(rbind(c(1,1,1),c(2,3,4)))#
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))#
-axis(2)#
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)#
-axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)#
-title('A',adj=0)#
-text(19600,1.75,labels='Locus 1')#
-text(34100,1.02,labels='Locus 2')#
+PBS[overplot,]
+PBS[34252: 34259,]
+PBS[34250: 34265,]
+PBS[34250: 34270,]
+PBS[34250: 34272,]
+PBS[34250: 34273,]
+PBS[34250: 34274,]
+plot(snps$HE,col= snps$chrcol)
+plot(snps$HE[snps$chr==7],col= snps$chrcol[snps$chr==7])
+unique(snps$chr)
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chr<-(gsub('chr','',snps$chr))
+head(snps$chr)
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))
+snps<-snps[order(snps$chrnum,snps$chr,snps$pos),]
+head(snps)
+unique(snps$chr)
+plot(snps$HE[snps$chr==7],col= snps$chrcol[snps$chr==7])
+plot(snps$HE[snps$chrnum==7],col= snps$chrcol[snps$chrnum==7])
+plot(snps$HE,col= snps$chrcol)
+plot(snps$HE,col= snps$chrcol,cex=0.5)
+snps$or<-NA
+quantile(snps$HE,0.95)
+quantHE<-quantile(snps$HE,0.95)
+fisher.test(snps$HE[1:100]> quantHE[1:100],sns$Eff=='missense')
+fisher.test(snps$HE[1:100]> quantHE,sns$Eff[1:100]=='missense')
+sns$Eff[1:100]
+snps$HE[1:100]
+fisher.test(snps$HE[1:1000]> quantHE,sns$Eff[1:1000]=='missense')
+fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$odds.ratio
+i=1001
+fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$odds.ratio
+fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$estimate
+snps$or[i]<-fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$estimate
+for(i in 1001:nrow(snps)){#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$estimate#
+}
+head(snps[1000:1100,])
+snps[1000:1100,]
+plot(snps$or)
+testsnps<-seq(1001,nrow(snps),100)
+testsnps
+for(i in testsnps){#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-1000)]> quantHE,sns$Eff[i:(i-1000)]=='missense')$estimate#
+}
+quantHE<-quantile(snps$HE,0.95)#
+testsnps<-seq(5001,nrow(snps),1000)
+testsnps
+for(i in testsnps){#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-5000)]> quantHE,sns$Eff[i:(i-5000)]=='missense')$estimate#
+}
+snps$or<-NA#
+quantHE<-quantile(snps$HE,0.95)#
+testsnps<-seq(5001,nrow(snps),1000)#
+for(i in testsnps){#
+	print(i)#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-5000)]> quantHE,sns$Eff[i:(i-5000)]=='missense')$estimate#
+}#
+plot(snps$or)
+plot(snps$or,col=snps$chrcol)
+plot(snps$or,col=snps$chrcol,lwd=2)
+abline(h=1)
+abline(h=1,lwd=2,lty=2)
+snps<-fread('snpfst_sns_nowarning.txt.gz')#
+colnames(snps)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')#
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])#
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))#
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))#
+snps<-snps[order(snps$chrnum,snps$chr,snps$pos),]#
+snps$chr[is.na(as.numeric(snps$chr))]<-'unplaced'#
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chr)%%2]#
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)#
+snps$HE<-getPBS(snps$HC.HE,snps$HD.HE, snps$HC.HD)#
+plot(snps$HE,col= snps$chrcol,cex=0.5)#
+snps$or<-NA#
+quantHE<-quantile(snps$HE,0.95)#
+testsnps<-seq(5001,nrow(snps),1000)#
+for(i in testsnps){#
+	print(i)#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-5000)]> quantHE,sns$Eff[i:(i-5000)]=='missense')$estimate#
+}#
+plot(snps$or,col=snps$chrcol,lwd=2)#
+abline(h=1,lwd=2,lty=2)
+dim(snps)
+snps<-fread('snpfst_sns_nowarning.txt.gz')#
+colnames(snps)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')#
+snps$chr<-sapply(snps$SNP,function(s) strsplit(s,':')[[1]][1])#
+snps$chrnum<-as.numeric(gsub('chr','',snps$chr))#
+snps$pos<-as.numeric(sapply(snps$SNP,function(s) strsplit(s,':')[[1]][2]))#
+snps<-snps[order(snps$chrnum,snps$chr,snps$pos),]#
+snps$chr[is.na(as.numeric(snps$chr))]<-'unplaced'#
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chr)%%2]#
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)#
+snps$HE<-getPBS(snps$HC.HE,snps$HD.HE, snps$HC.HD)#
+plot(snps$HE,col= snps$chrcol,cex=0.5)#
+snps$or<-NA#
+quantHE<-quantile(snps$HE,0.95)#
+testsnps<-seq(5001,nrow(snps),1000)#
+for(i in testsnps){#
+	print(i)#
+	snps$or[i]<-fisher.test(snps$HE[i:(i-5000)]> quantHE,sns$Eff[i:(i-5000)]=='missense')$estimate#
+}#
+plot(snps$or,col=snps$chrcol,lwd=2)#
+abline(h=1,lwd=2,lty=2)#
 #
-plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HA.HE.rolldxy[overplot],HA.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('B',adj=0)#
-#
-plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HC.HE.rolldxy[overplot],HC.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('C',adj=0)#
-#
-plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HD.HE.rolldxy[overplot],HD.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('D',adj=0)
-png('../Figures/Figure2.png',width=6,height=4,res=300,units='in')#
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(rbind(c(1,1,1),c(2,3,4)))#
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))#
-axis(2)#
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)#
-axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)#
-title('A',adj=0)#
-text(19600,1.75,labels='Locus 1')#
-text(34100,1.02,labels='Locus 2')#
-#
-plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HA.HE.rolldxy[overplot],HA.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('B',adj=0)#
-#
-plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HC.HE.rolldxy[overplot],HC.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('C',adj=0)#
-#
-plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))#
-points(HD.HE.rolldxy[overplot],HD.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)#
-title('D',adj=0)#
-#
-dev.off()
-head(meta)
-cor(meta$propd,meta$mitotype)
-lm(meta$propd~meta$cryp+meta$mitotype)
-summary(lm(meta$propd~meta$cryp+meta$mitotype))
-layout(c(1,1,2))
-plot(symfst$fst,col=symfst$chrcol,ylab=expression(F[ST]),xlab='Genomic position  (100 kb window, 10 kb step)')
-layout(t(as.matrix(c(1,1,2))))
-plot(symfst$fst,col=symfst$chrcol,ylab=expression(F[ST]),xlab='Genomic position  (100 kb window, 10 kb step)')
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(t(as.matrix(c(1,1,2))))#
-#
-plot(symfst$fst,col=symfst$chrcol,ylab=expression(F[ST]),xlab='Genomic position  (100 kb window, 10 kb step)')#
-points(which(symfst$outl),symfst$fst[symfst$outl],col=symfst$chrcol[symfst$outl])#
-text(43000,0.55,labels=c('xfSc0000366'),cex=0.7)#
-symfst[which.max(symfst$fst),]#
-covmat<-1000000*t(as.matrix(idx[,3:116]))/colSums(idx[,3:116])#
-title('A',adj=0)#
-#
-plot(covmat[,idx[,1]=='xfSc0000366'],propd,ylab='Proportion sym. D',xlab='xfSc0000366 reads per million')#
-cor.test(covmat[,idx[,1]=='xfSc0000366'],propd)#
-title('B',adj=0)
-png('../Figures/FigureS4.png',width=6,height=3,res=300,units='in')#
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')#
-layout(t(as.matrix(c(1,1,2))))#
-#
-plot(symfst$fst,col=symfst$chrcol,ylab=expression(F[ST]),xlab='Genomic position  (100 kb window, 10 kb step)')#
-points(which(symfst$outl),symfst$fst[symfst$outl],col=symfst$chrcol[symfst$outl])#
-text(43000,0.55,labels=c('xfSc0000366'),cex=0.7)#
-symfst[which.max(symfst$fst),]#
-covmat<-1000000*t(as.matrix(idx[,3:116]))/colSums(idx[,3:116])#
-title('A',adj=0)#
-#
-plot(covmat[,idx[,1]=='xfSc0000366'],propd,ylab='Proportion sym. D',xlab='xfSc0000366 reads per million')#
-cor.test(covmat[,idx[,1]=='xfSc0000366'],propd)#
-title('B',adj=0)#
-#
-dev.off()
+snps2<-fread('snpfst_sns_warning.txt.gz')#
+colnames(snps2)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','gene','Eff')#
+snps2$chr<-sapply(snps2$SNP,function(s) strsplit(s,':')[[1]][1])#
+snps2$chrnum<-as.numeric(gsub('chr','',snps2$chr))#
+snps2$pos<-as.numeric(sapply(snps2$SNP,function(s) strsplit(s,':')[[1]][2]))#
+snps2<-snps2[order(snps2$chrnum,snps2$chr,snps2$pos),]#
+snps2$chr[is.na(as.numeric(snps2$chr))]<-'unplaced'#
+snps2$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps2$chr)%%2]#
+snps2$chrcol[snps2$chr=='unplaced']<-grey(0.7)#
+snps2$HE<-getPBS(snps2$HC.HE,snps2$HD.HE, snps2$HC.HD)#
+plot(snps2$HE,col= snps2$chrcol,cex=0.5)#
+snps2$or<-NA#
+quantHE<-quantile(snps2$HE,0.95)#
+testsnps2<-seq(5001,nrow(snps2),1000)#
+for(i in testsnps2){#
+	print(i)#
+	snps2$or[i]<-fisher.test(snps2$HE[i:(i-5000)]> quantHE,sns$Eff[i:(i-5000)]=='missense')$estimate#
+}#
+plot(snps2$or,col=snps2$chrcol,lwd=2)#
+abline(h=1,lwd=2,lty=2)
+plot(snps$or,col=snps$chrcol,lwd=2)
+head(snps)
+table(snps$chrcol)
+table(snps2$chrcol)
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chrnum)%%2]#
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)
+plot(snps$or,col=snps$chrcol,lwd=2)
+as.numeric(snps$chrnum)
+table(snps$chrcol)
+table([1+as.numeric(snps$chrnum)%%2])
+table(1+as.numeric(snps$chrnum)%%2)
+snps$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(snps$chrnum)%%2]
+head(snps)
+snps$chrcol[snps$chr=='unplaced']<-grey(0.7)
+plot(snps$or,col=snps$chrcol,lwd=2)
+snps[testsnps]
+plot(snps$or,col=snps$chrcol,lwd=2)
+abline(h=1,lwd=2,lty=2)
+plot(snps2$or,col=snps2$chrcol,lwd=2)
+abline(h=1,lwd=2,lty=2)
+which.max(snps2$HE)
+snps2[which.max(snps2$HE),]
+snps[which.max(snps$HE),]
+snps[snps$HE>5,]
+snps2[snps2$HE>5,]
+snps2[snps2$HE>4,]
+snps2[snps2$HE>4&snps2$chrnum==7,]
+snps2[snps2$HE>5,]
+snps[snps$gene=='Amillepora12599',]
+head(snps)
+snps2[snps2$gene=='Amillepora12599',]
+table(snps2[snps2$gene=='Amillepora12599',])
+table(snps2[snps2$gene=='Amillepora12599',HE>quantHE])
+snps2[snps2$gene=='Amillepora12599',]
+subtab<-snps2[snps2$gene=='Amillepora12599',]
+table(subtab$Eff)
+table(subtab$Eff,subtab$HE>quantHE)
+fisher.test(subtab$Eff,subtab$HE>quantHE)
+table(snps2$gene=='Amillepora12599')
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(snps2$HE,0.99))
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(snps2$HE,0.999))
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(snps2$HE,0.9999))
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(snps2$HE,0.999))
+quantile(snps2$HE,0.999)
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(c(snps$HE,snps2$HE),0.999))
+nrow(snps)+nrow(snps2)
+table(snps2$gene=='Amillepora12599',snps2$HE>quantile(c(snps$HE,snps2$HE),0.9999))
+table(c(snps$HE,snps2$HE)>5)
+table(snps2$gene=='Amillepora12599',snps2$HE>5)
+snps[snps$HE>5,]
+snps2[snps2$HE>5,]
+table(snps2[snps2$HE>5,'gene'])
+table(snps[snps2$HE>5,'gene'])
+table(snps[snps$HE>5,'gene'])
+c(table(snps[snps$HE>5,'gene']),table(snps2[snps2$HE>5,'gene']))
+hist(c(table(snps[snps$HE>5,'gene']),table(snps2[snps2$HE>5,'gene'])))
+hist(c(table(snps[snps$HE>5,'gene']),table(snps2[snps2$HE>5,'gene'])),breaks=20)
+head(PBS)
+tail(PBS[PBS$chr=='chr1',])
+table(PBS$cher)
+table(PBS$chr)
+tmf<-read.delim('tmf_counts.txt',header=F)
+tmf
+mc<-read.delim('~/Dropbox/GradWork/genomes/2018_merged_counts.txt')
+head(tmf)
+tmf<-read.delim('tmf_counts.txt',header=F)#
+tmf$loc<-e2$vectors[match(tmf[,1],as.character(meta$tag)),1]#
+tmf$cryp<-meta$cryp[match(tmf[,1],as.character(meta$tag))]#
+cor(tmf$loc,tmf[,2],use='p')#
 anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
-summary(lm(tmf[,2]~tmf$cryp+tmf$loc))
-anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc),type='I')
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc),type='III')
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc),type='II')
-Anova(lm(tmf[,2]~tmf$cryp+tmf$loc),type='III')
-anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
+tmf<-read.delim('tmf_counts.txt',header=F)
+tmf$loc<-e2$vectors[match(tmf[,1],as.character(meta$tag)),1]
+tmf$cryp<-meta$cryp[match(tmf[,1],as.character(meta$tag))]
+mc<-read.delim('~/Dropbox/GradWork/genomes/2018_merged_counts.txt')
+match(tmf[,1],colnames(mc))
+head(mc)
+mc<-read.delim('~/Dropbox/GradWork/genomes/2018_merged_counts.txt',row.names=1)
+mc['contig77473_192899',match(tmf[,1],colnames(mc))
+mc['contig77473_192899',match(tmf[,1],colnames(mc))]
+mc['contig77473_192899',match(tmf[,1],colnames(mc))]
+tmf$loc1<-mc['contig77473_192899',match(tmf[,1],colnames(mc))]
+tmf$loc1<-unlist(mc['contig77473_192899',match(tmf[,1],colnames(mc))])
+tmf
+tmf<-read.delim('tmf_counts.txt',header=F)
+tmf$loc<-e2$vectors[match(tmf[,1],as.character(meta$tag)),1]
+tmf
+tmf$cryp<-meta$cryp[match(tmf[,1],as.character(meta$tag))]
+tmf
+tmf$loc1<-unlist(mc['contig77473_192899',match(tmf[,1],colnames(mc))])
+plot(tmf$cryp,tmf$loc1)
+stripchart(loc1~cryp,data=tmf)
+stripchart(loc1~cryp,data=tmf,h=F)
+stripchart(loc1~cryp,data=tmf,v=T)
+stripchart(loc1~cryp,data=tmf,v=T,jitter=T)
+stripchart(loc1~cryp,data=tmf,v=T,jitter=T)
+stripchart(loc1~cryp,data=tmf,v=T,jitter=T)
+stripchart(loc1~cryp,data=tmf,v=T,jitter=T)
+stripchart(loc1~cryp,data=tmf,v=T,method='j')
+stripchart(loc1~cryp,data=tmf,v=T,method='j')
+stripchart(loc1~cryp,data=tmf,v=T,method='j')
+tmf
+hist(tmf[,2])
+hist(tmf[,2],breaks=20)
