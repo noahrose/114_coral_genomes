@@ -48,6 +48,9 @@ meta$binsym[meta$propd>0.5]<-'D'
 meta$pool<-factor(meta$pool)
 write.csv(meta,file='meta.csv',row.names=F,quote=F)
 
+glm.out1<-glm(binbl~pool+cryp+propd,data=meta,family='binomial')
+glm.out2<-glm(binbl~pool+propd,data=meta,family='binomial')
+
 
 ####################
 #GENOMIC ANALYSES          
@@ -110,7 +113,201 @@ Fst10kb<-na.omit(Fst10kb)
 Fst10kb<-as.matrix(Fst10kb)
 trees<-apply(Fst10kb,1,getTrees)
 
+#####################
+####################
 
+#Figure S1
+#Table S2
+
+sns<-fread('snpfst_all_info.txt.gz')
+colnames(sns)<-c('SNP','maf','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','Eff','gene','nuc','prot','warn')
+sns$missense<-grepl('missense',sns$Eff)
+sns$chr<-gsub(':.*','',sns$SNP)
+sns$pos<-gsub('.*:','',sns$SNP)
+sns$maf<-round(sns$maf,2)
+
+table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99,'gene'])
+table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99&sns$missense,'gene'])
+dim(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99&sns$missense,'gene'])
+table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99,'chr'])
+
+snsPBS<-getPBS(sns$HA.HC,sns$HA.HD,sns$HA.HE,sns$HC.HD,sns$HC.HE,sns$HD.HE)
+sns$HA<-snsPBS[,1]
+sns$HC<-snsPBS[,2]
+sns$HD<-snsPBS[,3]
+sns$HE<-snsPBS[,4]
+
+s2<-sns[sns$missense&sns$HE>quantile(sns$HE,0.9),c(1:2,10:13,17:20)]
+write.table(s2,sep='\t',quote=F,row.names=F,file='../Tables/TableS2.txt')
+
+# shufs<-replicate(100,{
+# shuffle(nrow(sns),control=how(blocks=sns$maf))
+# })
+
+# HAperms90<-apply(shufs,2,function(x) table(sns$HA[x][which(sns$missense)]>quantile(sns$HA,0.9))[2])
+# HAobs90<-table(sns$HA[which(sns$missense)]>quantile(sns$HA,0.9))[2]
+# HAperms95<-apply(shufs,2,function(x) table(sns$HA[x][which(sns$missense)]>quantile(sns$HA,0.95))[2])
+# HAobs95<-table(sns$HA[which(sns$missense)]>quantile(sns$HA,0.95))[2]
+# HAperms99<-apply(shufs,2,function(x) table(sns$HA[x][which(sns$missense)]>quantile(sns$HA,0.99))[2])
+# HAobs99<-table(sns$HA[which(sns$missense)]>quantile(sns$HA,0.99))[2]
+
+# HCperms90<-apply(shufs,2,function(x) table(sns$HC[x][which(sns$missense)]>quantile(sns$HC,0.9))[2])
+# HCobs90<-table(sns$HC[which(sns$missense)]>quantile(sns$HC,0.9))[2]
+# HCperms95<-apply(shufs,2,function(x) table(sns$HC[x][which(sns$missense)]>quantile(sns$HC,0.95))[2])
+# HCobs95<-table(sns$HC[which(sns$missense)]>quantile(sns$HC,0.95))[2]
+# HCperms99<-apply(shufs,2,function(x) table(sns$HC[x][which(sns$missense)]>quantile(sns$HC,0.99))[2])
+# HCobs99<-table(sns$HC[which(sns$missense)]>quantile(sns$HC,0.99))[2]
+
+# HDperms90<-apply(shufs,2,function(x) table(sns$HD[x][which(sns$missense)]>quantile(sns$HD,0.9))[2])
+# HDobs90<-table(sns$HD[which(sns$missense)]>quantile(sns$HD,0.9))[2]
+# HDperms95<-apply(shufs,2,function(x) table(sns$HD[x][which(sns$missense)]>quantile(sns$HD,0.95))[2])
+# HDobs95<-table(sns$HD[which(sns$missense)]>quantile(sns$HD,0.95))[2]
+# HDperms99<-apply(shufs,2,function(x) table(sns$HD[x][which(sns$missense)]>quantile(sns$HD,0.99))[2])
+# HDobs99<-table(sns$HD[which(sns$missense)]>quantile(sns$HD,0.99))[2]
+
+# HEperms90<-apply(shufs,2,function(x) table(sns$HE[x][which(sns$missense)]>quantile(sns$HE,0.9))[2])
+# HEobs90<-table(sns$HE[which(sns$missense)]>quantile(sns$HE,0.9))[2]
+# HEperms95<-apply(shufs,2,function(x) table(sns$HE[x][which(sns$missense)]>quantile(sns$HE,0.95))[2])
+# HEobs95<-table(sns$HE[which(sns$missense)]>quantile(sns$HE,0.95))[2]
+# HEperms99<-apply(shufs,2,function(x) table(sns$HE[x][which(sns$missense)]>quantile(sns$HE,0.99))[2])
+# HEobs99<-table(sns$HE[which(sns$missense)]>quantile(sns$HE,0.99))[2]
+
+# sns$loc1<-(sns$chr=='chr7'&sns$pos> 20350000&sns$pos<20570000)
+# sns$loc2<-(sns$chr=='Sc0000015'&sns$pos> 2380000&sns$pos<2580000)
+# sns2<-sns[sns$loc1==F & sns$loc2==F,]
+
+# shufs2<-replicate(100,{
+# shuffle(nrow(sns2),control=how(blocks=sns2$maf))
+# })
+
+# HEperms90_2<-apply(shufs2,2,function(x) table(sns2$HE[x][which(sns2$missense)]>quantile(sns2$HE,0.9))[2])
+# HEobs90_2<-table(sns2$HE[which(sns2$missense)]>quantile(sns2$HE,0.9))[2]
+# HEperms95_2<-apply(shufs2,2,function(x) table(sns2$HE[x][which(sns2$missense)]>quantile(sns2$HE,0.95))[2])
+# HEobs95_2<-table(sns2$HE[which(sns2$missense)]>quantile(sns2$HE,0.95))[2]
+# HEperms99_2<-apply(shufs2,2,function(x) table(sns2$HE[x][which(sns2$missense)]>quantile(sns2$HE,0.99))[2])
+# HEobs99_2<-table(sns2$HE[which(sns2$missense)]>quantile(sns2$HE,0.99))[2]
+
+
+# save(shufs,shufs2,HAperms90,HAperms95,HAperms99,HAobs90,HAobs95,HAobs99,
+# HCperms90,HCperms95,HCperms99,HCobs90,HCobs95,HCobs99,
+# HDperms90,HDperms95,HDperms99,HDobs90,HDobs95,HDobs99,
+# HEperms90,HEperms95,HEperms99,HEobs90,HEobs95,HEobs99,
+# HEperms90_2,HEperms95_2,HEperms99_2,HEobs90_2,HEobs95_2,HEobs99_2,
+# file='sns_perms.Rdata')
+
+getP<-function(perms,obs){
+	currp<-(min(length(which(perms>obs)),length(which(perms<obs)))*2)/length(perms)
+	if(currp==0) return(paste0('P<',1/length(perms)))
+	return(paste0('P=',currp))
+}
+
+load('sns_perms.Rdata')
+
+png('../Figures/FigureS2.png',width=8,height=6,res=300,units='in')
+layout(rbind(c(1,2,2,2,2),c(3,4,5,6,7),c(8,9,10,11,12),c(13,14,15,16,17)))
+par(mar=c(3,3,1,1),mgp=c(1.5,0.2,0),bty='n',tck=-0.01,oma=c(0,1,0,0),cex.main=1)
+
+plot(density(sns$maf[sns$missense]),col='red',main='',xlab='MAF')
+lines(density(sns$maf[!sns$missense]))
+legend('top',fill=c('black','red'),legend=c('synonymous','missense'),bty='n',cex=0.7)
+title('A',adj=0,font.main=1,cex.main=1.5)
+
+snsPlot<-sns[sns$missense&sns$HE>0.1,]
+snsPlot$col<-c(grey(0.2),grey(0.6))[1+as.numeric(factor(snsPlot$chr,levels=unique(snsPlot$chr)))%%2]
+snsPlot$col[snsPlot$HE>quantile(sns$HE,0.9)]<-'tomato4'
+snsPlot$col[snsPlot$HE>quantile(sns$HE,0.95)]<-'red4'
+snsPlot$col[snsPlot$HE>quantile(sns$HE,0.99)]<-'red1'
+plot(snsPlot$HE,cex=0.2,xlab='Missense SNPs',ylab='HE PBS',col=snsPlot$col,xlim=c(0,130000))
+title('B',adj=0,font.main=1,cex.main=1.5)
+legend('topright',fill=c('tomato4','red4','red1'),legend=c('top 10%','top 5%','top 1%'),bty='n',cex=0.7)
+
+hist(HAperms90,col='grey',xlab='',ylab='Counts',xlim=c(50000,55000),main='HA',breaks=6)
+abline(v=HAobs90,col='red')
+title(main=getP(HAperms90,HAobs90),font.main=1,cex.main=0.8,adj=0.3,line=-1)
+title('C',adj=0,font.main=1,cex.main=1.5)
+mtext('top 10%',side=2,las=3,line=2.5)
+hist(HCperms90,col='grey',xlab='',ylab='',xlim=c(50000,55000),main='HC',breaks=6)
+abline(v=HCobs90,col='red')
+title(main=getP(HCperms90,HCobs90),font.main=1,cex.main=0.8,adj=0.2,line=-1)
+hist(HDperms90,col='grey',xlab='',ylab='',xlim=c(50000,55000),main='HD',breaks=6)
+abline(v=HDobs90,col='red')
+title(main=getP(HDperms90,HDobs90),font.main=1,cex.main=0.8,adj=0.08,line=-1)
+hist(HEperms90,col='grey',xlab='',ylab='',xlim=c(50000,55000),main='HE',breaks=6)
+abline(v=HEobs90,col='red')
+title(main=getP(HEperms90,HEobs90),font.main=1,cex.main=0.8,adj=0.2,line=-1)
+hist(HEperms90_2,col='grey',xlab='',ylab='Counts',xlim=c(50000,55000),main='HE (no L1,L2)',breaks=6)
+abline(v=HEobs90_2,col='red')
+title(main=getP(HEperms90_2,HEobs90_2),font.main=1,cex.main=0.8,adj=0.2,line=-1)
+
+hist(HAperms95,col='grey',xlab='',ylab='Counts',xlim=c(24500,27500),main='',breaks=6)
+abline(v=HAobs95,col='red')
+title(main=getP(HAperms95,HAobs95),font.main=1,cex.main=0.8,adj=0.4,line=-1)
+mtext('top 5%',side=2,las=3,line=2.5)
+hist(HCperms95,col='grey',xlab='',ylab='',xlim=c(24500,27500),main='',breaks=6)
+abline(v=HCobs95,col='red')
+title(main=getP(HCperms95,HCobs95),font.main=1,cex.main=0.8,adj=0.2,line=-1)
+hist(HDperms95,col='grey',xlab='',ylab='',xlim=c(24500,27500),main='',breaks=6)
+abline(v=HDobs95,col='red')
+title(main=getP(HDperms95,HDobs95),font.main=1,cex.main=0.8,adj=0.08,line=-1)
+hist(HEperms95,col='grey',xlab='',ylab='',xlim=c(24500,27500),main='',breaks=6)
+abline(v=HEobs95,col='red')
+title(main=getP(HEperms95,HEobs95),font.main=1,cex.main=0.8,adj=0.1,line=-1)
+hist(HEperms95_2,col='grey',xlab='',ylab='Counts',xlim=c(24500,27500),main='',breaks=6)
+abline(v=HEobs95_2,col='red')
+title(main=getP(HEperms95_2,HEobs95_2),font.main=1,cex.main=0.8,adj=0.1,line=-1)
+
+hist(HAperms99,col='grey',xlab='Missense outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
+abline(v=HAobs99,col='red')
+title(main=getP(HAperms99,HAobs99),font.main=1,cex.main=0.8,adj=0.1,line=-1)
+mtext('top 1%',side=2,las=3,line=2.5)
+hist(HCperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+abline(v=HCobs99,col='red')
+title(main=getP(HCperms99,HCobs99),font.main=1,cex.main=0.8,adj=0.9,line=-1)
+hist(HDperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+abline(v=HDobs99,col='red')
+title(main=getP(HDperms99,HDobs99),font.main=1,cex.main=0.8,adj=0.08,line=-1)
+hist(HEperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+abline(v=HEobs99,col='red')
+title(main=getP(HEperms99,HEobs99),font.main=1,cex.main=0.8,adj=0.8,line=-1)
+hist(HEperms99_2,col='grey',xlab='Missense outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
+abline(v=HEobs99_2,col='red')
+title(main=getP(HEperms99_2,HEobs99_2),font.main=1,cex.main=0.8,adj=0.8,line=-1)
+dev.off()
+
+g1<-sns[sns$gene=='Amillepora12599',]
+fisher.test(g1$HA.HE>0.99&g1$HC.HE>0.99&g1$HD.HE>0.99,g1$missense)
+g2<-sns[sns$gene=='Amillepora12602',]
+fisher.test(g2$HA.HE>0.99&g2$HC.HE>0.99&g2$HD.HE>0.99,g2$missense)
+l1<-sns[sns$loc1,]
+fisher.test(g2$HA.HE>0.99&g2$HC.HE>0.99&g2$HD.HE>0.99,g2$missense)
+
+#########################
+#########################
+
+getTopo<-function(tree){
+	tip<-which(tree$tip.label=='HE')
+	tree$tip.label[tree$edge[(tree$edge[,1]==tree$edge[tree$edge[,2]==tip,1]) & tree$edge[,2]<5 & tree$edge[,2]!=tip,2]]
+}
+
+drawTree<-function(x,y,lab,h,v,t){
+	segments(x-h,y,x+h,y)
+	segments(x-h,y,x-(2*h),y+v)
+	segments(x-h,y,x-(2*h),y-v)
+	segments(x+h,y,x+(2*h),y+v)
+	segments(x+h,y,x+(2*h),y-v)
+	text(c(x-(2*h)-t,x-(2*h)-t,x+(2*h)+t,x+(2*h)+t),c(y-v,y+v,y-v,y+v),labels=lab)
+}
+
+topos<-sapply(trees,getTopo)
+png('../Figures/FigureS1.png',width=4,height=4,res=300,units='in')
+par(mar=c(3,4,2,1),mgp=c(2.5,0.1,0),tck=-0.01)
+barplot(as.matrix(table(topos)),ylab='Counts',xlim=c(0,3))
+drawTree(2,43000,c('HA','HC','HD','HE'),0.1,2000,0.2)
+drawTree(2,35000,c('HA','HD','HC','HE'),0.1,2000,0.2)
+drawTree(2,18000,c('HD','HC','HA','HE'),0.1,2000,0.2)
+dev.off()
+###################
+####################
 
 ############
 #Figure 1
@@ -152,29 +349,14 @@ text(0.075,0.01,label=expression(italic(T) == 0.05))
 title('C',adj=0)
 
 #D
-
-getTopo<-function(tree){
-	tip<-which(tree$tip.label=='HE')
-	tree$tip.label[tree$edge[(tree$edge[,1]==tree$edge[tree$edge[,2]==tip,1]) & tree$edge[,2]<5 & tree$edge[,2]!=tip,2]]
-}
-
-drawTree<-function(x,y,lab,h,v,t){
-	segments(x-h,y,x+h,y)
-	segments(x-h,y,x-(2*h),y+v)
-	segments(x-h,y,x-(2*h),y-v)
-	segments(x+h,y,x+(2*h),y+v)
-	segments(x+h,y,x+(2*h),y-v)
-	text(c(x-(2*h)-t,x-(2*h)-t,x+(2*h)+t,x+(2*h)+t),c(y-v,y+v,y-v,y+v),labels=lab)
-}
-
-topos<-sapply(trees,getTopo)
-par(mar=c(3,4,2,1),mgp=c(2.5,0.1,0))
-barplot(as.matrix(table(topos)),ylab='Counts',xlim=c(0,3))
+plotperm<-data.frame(perms=c(HAperms90,HCperms90,HDperms90,HEperms90),ind=c(rep(1,100),rep(2,100),rep(3,100),rep(4,100)))
+plot(jitter(plotperm$ind,0.3),plotperm$perms,cex=1,ylim=c(50000,55500),lwd=0.5,col='grey',xlab='Species',ylab=expression('Missense outliers x'~10^3),axes=F,xlim=c(0.4,4.5))
+axis(1,at=1:4,labels=c('HA','HC','HD','HE'))
+axis(2,at=c(50000,52000,54000),labels=c(50,52,54))
+points(1:4,c(HAobs90,HCobs90,HDobs90,HEobs90),cex=1,col='red',pch=19)
+box(bty='l')
+legend('topright',fill=c('grey','red'),legend=c('permuted','observed'),bty='n')
 title('D',adj=0)
-drawTree(2,43000,c('HA','HC','HD','HE'),0.1,2000,0.2)
-drawTree(2,35000,c('HA','HD','HC','HE'),0.1,2000,0.2)
-drawTree(2,18000,c('HD','HC','HA','HE'),0.1,2000,0.2)
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0))
 
 #E
 seq<-ape::read.dna('ahy_mitosnps.fa',format='fasta')
@@ -424,18 +606,18 @@ axis(2)
 chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('A',adj=0)
-text(19600,1.8,labels='Locus 1')
-text(34100,1.15,labels='Locus 2')
+text(19600,1.8,labels='HES1')
+text(34100,1.18,labels='HES2')
 
-plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))
+plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HA~vs.~HE~pi[b]),ylab=expression(pi[w]))
 points(HA.HE.rolldxy[overplot],HA.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
 title('B',adj=0)
 
-plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))
+plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HC~vs.~HE~pi[b]),ylab=expression(pi[w]))
 points(HC.HE.rolldxy[overplot],HC.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
 title('C',adj=0)
 
-plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(pi[b]),ylab=expression(pi[w]))
+plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HD~vs.~HE~pi[b]),ylab=expression(pi[w]))
 points(HD.HE.rolldxy[overplot],HD.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
 title('D',adj=0)
 
@@ -446,7 +628,7 @@ dev.off()
 #Figure S1
 ###############################
 
-png('../Figures/FigureS1.png',width=6,height=6,res=300,units='in')
+png('../Figures/FigureS3.png',width=6,height=6,res=300,units='in')
 par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(4,1))
 plot(plotPBS$HA,col=plotPBS$HAcol,ylab='HA PBS',xlab='',axes=F,cex=0.5,ylim=c(0,1.7))
 points(which(plotPBS$HAoutl),plotPBS$HA[plotPBS$HAoutl],col=plotPBS$HAcol[plotPBS$HAoutl],cex=0.5)
@@ -479,76 +661,6 @@ title('D',adj=0)
 dev.off()
 
 #################
-###read in snps in chr order with missense and synon
-#look at distribution of high PBS snps
-#look at polygenic signal in and outside of outlier regions
-#find number of missense outliers across all genes
-#add uncharacterized candidate gene to figure and text
-
-#Figure S1
-#Table S2
-
-sns<-fread('snpfst_all_info.txt.gz')
-colnames(sns)<-c('SNP','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','Eff','gene','nuc','prot','warn')
-sns$missense<-grepl('missense',sns$Eff)
-sns$chr<-gsub(':.*','',sns$SNP)
-sns$pos<-gsub('.*:','',sns$SNP)
-table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99,'gene'])
-table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99&sns$missense,'gene'])
-dim(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99&sns$missense,'gene'])
-table(sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99,'chr'])
-sns[sns$HA.HE>0.99&sns$HC.HE>0.99&sns$HD.HE>0.99&sns$missense,c('chr','pos','gene','Eff','warn','HE','HA.HE','HC.HE','HD.HE')]
-
-markOutliers<-function(bed,df){
-	outl<-rep(F,nrow(df))
-	for(i in 1:nrow(bed)){
-		print(i)
-		outl[df$chr==bed[i,1] & df$pos>as.numeric(bed[i,2]) & df$pos<=as.numeric(bed[i,3])]<-T
-	}
-	return(outl)
-}
-sns$HAoutl<-markOutliers(HAbed,sns)
-sns$HCoutl<-markOutliers(HCbed,sns)
-sns$HDoutl<-markOutliers(HDbed,sns)
-sns$HEoutl<-markOutliers(HEbed,sns)
-snsPBS<-getPBS(sns$HA.HC,sns$HA.HD,sns$HA.HE,sns$HC.HD,sns$HC.HE,sns$HD.HE)
-sns$HA<-snsPBS[,1]
-sns$HC<-snsPBS[,2]
-sns$HD<-snsPBS[,3]
-sns$HE<-snsPBS[,4]
-
-
-g1<-sns[sns$gene=='Amillepora12599',]
-fisher.test(g1$HA.HE>0.99&g1$HC.HE>0.99&g1$HD.HE>0.99,g1$missense)
-g2<-sns[sns$gene=='Amillepora12602',]
-fisher.test(g2$HA.HE>0.99&g2$HC.HE>0.99&g2$HD.HE>0.99,g2$missense)
-
-# # snsTest<-sns[sns$warn=='OK'|sns$warn=='WARNING_REF_DOES_NOT_MATCH_GENOME'&sns$HEoutl==F,]
-# fisher.test(snsTest $HA> quantile(snsTest $HA,0.999), snsTest$missense)
-# fisher.test(snsTest $HC> quantile(snsTest $HC,0.999), snsTest$missense)
-# fisher.test(snsTest $HD> quantile(snsTest $HD,0.999), snsTest$missense)
-# fisher.test(snsTest $HE> quantile(snsTest $HE,0.999), snsTest$missense)
-
-# snsTest<-sns[(sns$warn=='OK'|sns$warn=='WARNING_REF_DOES_NOT_MATCH_GENOME'),]
-# HA<-fisher.test(snsTest $HA> quantile(snsTest $HA,0.999), snsTest$missense)
-# HC<-fisher.test(snsTest $HC> quantile(snsTest $HC,0.999), snsTest$missense)
-# HD<-fisher.test(snsTest $HD> quantile(snsTest $HD,0.999), snsTest$missense)
-# HE<-fisher.test(snsTest $HE> quantile(snsTest $HE,0.999), snsTest$missense)
-
-# ors<-cbind(HA$estimate,HC$estimate,HD$estimate,HE$estimate)
-# errs<-rbind(HA$conf.int,HC$conf.int,HD$conf.int,HE$conf.int)
-# ortab<-matrix(0,4,4)
-# ortab[1,1]<-ors[1]
-# ortab[2,2]<-ors[2]
-# ortab[3,3]<-ors[3]
-# ortab[4,4]<-ors[4]
-
-# png('../Figures/FigureS1.png',width=3,height=4,units='in',res=300)
-# bp<-barplot(ortab,ylim=c(0,1.2),col=crypcol,border=NA,names.arg=c('HA','HC','HD','HE'),las=1,ylab='NS vs. S outlier odds ratio',cex.names=1)
-# segments(bp,errs[,1],bp,errs[,2],lwd=2)
-# abline(h=1,lwd=2,lty=3)
-# dev.off()
-
 
 ####################
 # Figure 3
@@ -579,6 +691,7 @@ ahy2amil<-read.delim('ahy2amil_blast.txt',header=F)
 amil2ahy<-read.delim('amil2ahy_blast.txt',header=F)
 ahy2amil$recip<-amil2ahy[match(ahy2amil[,2],amil2ahy[,1]),2]
 ahy2amil$rbh<-ahy2amil[,1]==ahy2amil$recip
+ahy2amil[ahy2amil[,2]=='Amillepora12599-RA','recip']
 max(c(ahy2amil[,11]),c(amil2ahy[,11]))
 de<-read.delim('HEvsHC_DE_contigs.txt',header=F)
 ahy2amil$de<-ahy2amil[,1]%in%de[,1]
@@ -596,16 +709,6 @@ genes$gene2<-paste(genes$gene2,genes$annot)
 win10<-getMeanPBS(HA.HC,HA.HD,HA.HE,HC.HD,HC.HE,HD.HE,edges=edges,k=1,remove.edges=F)
 PBS$HEwin<-win10[,4]
 
-#########
-sns2<-fread('locus1_sns.txt')
-sns2$Eff<-'synonymous'
-sns2$Eff[grepl('missense_variant',sns2[,V9])]<-'missense'
-colnames(sns2)<-c('chr','pos','HA.HC','HA.HD','HA.HE','HC.HD','HC.HE','HD.HE','ANN','Eff')
-sns2$HE<-getPBS(sns2$HC.HE,sns2$HD.HE,sns2$HC.HD)
-
-table(sns2$Eff)
-table(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))
-fisher.test(sns2$Eff,sns2$HE>quantile(sns$HE,0.95))
 
 ########
 
@@ -643,13 +746,13 @@ legend('topleft',legend='missense SNPs',fill='darkred',bty='n',cex=0.7)
 
 bleachcol<-crypcols
 bleachcol[meta$binbl==1]<-grey(0.9)
-plot(jitter(as.numeric(meta$cryp)),e1$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='Locus 1 PC1 (62% of variation)',xlab='Cryptic species')
+plot(jitter(as.numeric(meta$cryp)),e1$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='HES1 PC1 (62% of variation)',xlab='Cryptic species')
 axis(1,at=1:4,labels=c('HA','HC','HD','HE'),lwd=0)
 axis(2,at=c(-0.1,0,0.1))
 title('C',adj=0)
 legend('top',legend='bleached',fill=grey(0.95),bty='n')
 
-plot(jitter(as.numeric(meta$cryp)),e2$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='Locus 2 PC1 (70% of variation)',xlab='Cryptic species')
+plot(jitter(as.numeric(meta$cryp)),e2$vectors[,1],bg=bleachcol,pch=21,axes=F,ylab='HES2 PC1 (70% of variation)',xlab='Cryptic species')
 axis(1,at=1:4,labels=c('HA','HC','HD','HE'),lwd=0)
 axis(2,at=c(-0.1,0,0.1))
 title('D',adj=0)
@@ -688,7 +791,7 @@ locus1cryp<-ape::read.dna('Locus1.fna',format='fasta')
 locus1dist<-dist.dna(locus1cryp,model='raw')
 locus1.nj<-bionj(locus1dist)
 locus1.nj$tip.label[1]<-'A. mil.'
-plot(locus1.nj,type='u',main='Locus 1')
+plot(locus1.nj,type='u',main='HES1')
 segments(0,0.02,0.002,0.02,lwd=1)
 text(0.0025,0.023,labels='0.5%')
 title('C',adj=0)
@@ -697,7 +800,7 @@ locus2cryp<-ape::read.dna('Locus2.fna',format='fasta')
 locus2dist<-dist.dna(locus2cryp,model='raw')
 locus2.nj<-bionj(locus2dist)
 locus2.nj$tip.label[1]<-'A. mil.'
-plot(locus2.nj,type='u',main='Locus 2')
+plot(locus2.nj,type='u',main='HES2')
 segments(0.005,0.002,0.005,0.007,lwd=1)
 text(0.0065,0.0045,labels='0.5%')
 title('D',adj=0)
@@ -731,9 +834,9 @@ tmf$cryp<-meta$cryp[match(tmf[,1],as.character(meta$tag))]
 cor(tmf$loc,tmf[,2],use='p')
 anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
 
-png('../Figures/FigureS2.png',width=3,height=3,res=300,units='in')
+png('../Figures/FigureS4.png',width=3,height=3,res=300,units='in')
 par(mar=c(3,2,1,1),tck=-0.01,mgp=c(1.1,.1,0),bty='l')
-plot(tmf$loc,tmf[,2],bg='black',col=crypcols[match(tmf[,1],as.character(meta$tag))],pch=19,xlab='PC1 Locus 2',ylab='TMF norm. counts')
+plot(tmf$loc,tmf[,2],bg='black',col=crypcols[match(tmf[,1],as.character(meta$tag))],pch=19,xlab='PC1 HES2',ylab='TMF norm. counts')
 abline(lm(tmf[,2]~tmf$loc),lwd=2,lty=2)
 legend('topleft',legend=c('HC','HE'),fill=crypcol[c(2,4)],bty='n')
 dev.off()
@@ -756,7 +859,7 @@ symfst$colchrom<-rainbow(11,v=0.8)[1+as.numeric(factor(symfst$chr))%%11]
 symfst$chrcol[which(symfst$outl)]<-symfst$colchrom[which(symfst$outl)]
 symfst<-symfst[order(symfst$chrnum),]
 
-png('../Figures/FigureS3.png',width=6,height=3,res=300,units='in')
+png('../Figures/FigureS5.png',width=6,height=3,res=300,units='in')
 par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')
 layout(t(as.matrix(c(1,1,2))))
 
@@ -774,8 +877,6 @@ title('B',adj=0)
 dev.off()
 
 ####################
-
-sink('../Tables/TableS4.txt')
 
 library(car)
 lm.out<-lm(propd~pool+cryp,data=meta)
@@ -819,5 +920,3 @@ cat('\n\n\n###relative likelihood of simple model relative to genomic model###\n
 genomicAIC<-extractAIC(glm.out)
 genomicAIC[2]-simpleAIC[2]
 exp((genomicAIC[2]-simpleAIC[2])/2)
-
-sink()

@@ -1,2 +1,3 @@
 rsync.sh
 .DS_Store
+processed_data/sns_perms.Rdata
