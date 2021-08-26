@@ -5,7 +5,7 @@ library(pegas)
 library(data.table)
 library(permute)
 
-setwd('~/Dropbox/GradWork/114_coral_genomes/processed_data')
+setwd('~/Dropbox (Princeton)/GradWork/114_coral_genomes/processed_data')
 
 amil<-read.delim('amil.picard')
 sum(amil$PF_HQ_ALIGNED_READS)
@@ -46,6 +46,7 @@ meta$propd<-propd[match(meta$filename ,gsub('X','',names(propd)))]
 meta$binsym<-'C'
 meta$binsym[meta$propd>0.5]<-'D'
 meta$pool<-factor(meta$pool)
+
 write.csv(meta,file='meta.csv',row.names=F,quote=F)
 
 glm.out1<-glm(binbl~pool+cryp+propd,data=meta,family='binomial')
@@ -209,22 +210,22 @@ par(mar=c(3,3,1,1),mgp=c(1.5,0.2,0),bty='n',tck=-0.01,oma=c(0,1,0,0),cex.main=1)
 
 plot(density(sns$maf[sns$missense]),col='red',main='',xlab='MAF')
 lines(density(sns$maf[!sns$missense]))
-legend('top',fill=c('black','red'),legend=c('synonymous','missense'),bty='n',cex=0.7)
-title('A',adj=0,font.main=1,cex.main=1.5)
+legend('top',fill=c('black','red'),legend=c('synonymous','nonsynonymous'),bty='n',cex=0.7)
+title('A',adj=0,cex.main=1.5)
 
 snsPlot<-sns[sns$missense&sns$HE>0.1,]
 snsPlot$col<-c(grey(0.2),grey(0.6))[1+as.numeric(factor(snsPlot$chr,levels=unique(snsPlot$chr)))%%2]
 snsPlot$col[snsPlot$HE>quantile(sns$HE,0.9)]<-'tomato4'
 snsPlot$col[snsPlot$HE>quantile(sns$HE,0.95)]<-'red4'
 snsPlot$col[snsPlot$HE>quantile(sns$HE,0.99)]<-'red1'
-plot(snsPlot$HE,cex=0.2,xlab='Missense SNPs',ylab='HE PBS',col=snsPlot$col,xlim=c(0,130000))
-title('B',adj=0,font.main=1,cex.main=1.5)
+plot(snsPlot$HE,cex=0.2,xlab='Nonsynonymous SNPs',ylab='HE PBS',col=snsPlot$col,xlim=c(0,130000))
+title('B',adj=0,cex.main=1.5)
 legend('topright',fill=c('tomato4','red4','red1'),legend=c('top 10%','top 5%','top 1%'),bty='n',cex=0.7)
 
 hist(HAperms90,col='grey',xlab='',ylab='Counts',xlim=c(50000,55000),main='HA',breaks=6)
 abline(v=HAobs90,col='red')
 title(main=getP(HAperms90,HAobs90),font.main=1,cex.main=0.8,adj=0.3,line=-1)
-title('C',adj=0,font.main=1,cex.main=1.5)
+title('C',adj=0,cex.main=1.5)
 mtext('top 10%',side=2,las=3,line=2.5)
 hist(HCperms90,col='grey',xlab='',ylab='',xlim=c(50000,55000),main='HC',breaks=6)
 abline(v=HCobs90,col='red')
@@ -256,20 +257,20 @@ hist(HEperms95_2,col='grey',xlab='',ylab='Counts',xlim=c(24500,27500),main='',br
 abline(v=HEobs95_2,col='red')
 title(main=getP(HEperms95_2,HEobs95_2),font.main=1,cex.main=0.8,adj=0.1,line=-1)
 
-hist(HAperms99,col='grey',xlab='Missense outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
+hist(HAperms99,col='grey',xlab='Nonsynonymous outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
 abline(v=HAobs99,col='red')
 title(main=getP(HAperms99,HAobs99),font.main=1,cex.main=0.8,adj=0.1,line=-1)
 mtext('top 1%',side=2,las=3,line=2.5)
-hist(HCperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+hist(HCperms99,col='grey',xlab='Nonsynonymous outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
 abline(v=HCobs99,col='red')
 title(main=getP(HCperms99,HCobs99),font.main=1,cex.main=0.8,adj=0.9,line=-1)
-hist(HDperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+hist(HDperms99,col='grey',xlab='Nonsynonymous outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
 abline(v=HDobs99,col='red')
 title(main=getP(HDperms99,HDobs99),font.main=1,cex.main=0.8,adj=0.08,line=-1)
-hist(HEperms99,col='grey',xlab='Missense outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
+hist(HEperms99,col='grey',xlab='Nonsynonymous outliers',ylab='',xlim=c(4500,6000),main='',breaks=6)
 abline(v=HEobs99,col='red')
 title(main=getP(HEperms99,HEobs99),font.main=1,cex.main=0.8,adj=0.8,line=-1)
-hist(HEperms99_2,col='grey',xlab='Missense outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
+hist(HEperms99_2,col='grey',xlab='Nonsynonymous outliers',ylab='Counts',xlim=c(4500,6000),main='',breaks=6)
 abline(v=HEobs99_2,col='red')
 title(main=getP(HEperms99_2,HEobs99_2),font.main=1,cex.main=0.8,adj=0.8,line=-1)
 dev.off()
@@ -282,30 +283,6 @@ l1<-sns[sns$loc1,]
 fisher.test(g2$HA.HE>0.99&g2$HC.HE>0.99&g2$HD.HE>0.99,g2$missense)
 
 #########################
-#########################
-
-getTopo<-function(tree){
-	tip<-which(tree$tip.label=='HE')
-	tree$tip.label[tree$edge[(tree$edge[,1]==tree$edge[tree$edge[,2]==tip,1]) & tree$edge[,2]<5 & tree$edge[,2]!=tip,2]]
-}
-
-drawTree<-function(x,y,lab,h,v,t){
-	segments(x-h,y,x+h,y)
-	segments(x-h,y,x-(2*h),y+v)
-	segments(x-h,y,x-(2*h),y-v)
-	segments(x+h,y,x+(2*h),y+v)
-	segments(x+h,y,x+(2*h),y-v)
-	text(c(x-(2*h)-t,x-(2*h)-t,x+(2*h)+t,x+(2*h)+t),c(y-v,y+v,y-v,y+v),labels=lab)
-}
-
-topos<-sapply(trees,getTopo)
-png('../Figures/FigureS1.png',width=4,height=4,res=300,units='in')
-par(mar=c(3,4,2,1),mgp=c(2.5,0.1,0),tck=-0.01)
-barplot(as.matrix(table(topos)),ylab='Counts',xlim=c(0,3))
-drawTree(2,43000,c('HA','HC','HD','HE'),0.1,2000,0.2)
-drawTree(2,35000,c('HA','HD','HC','HE'),0.1,2000,0.2)
-drawTree(2,18000,c('HD','HC','HA','HE'),0.1,2000,0.2)
-dev.off()
 ###################
 ####################
 
@@ -350,7 +327,7 @@ title('C',adj=0)
 
 #D
 plotperm<-data.frame(perms=c(HAperms90,HCperms90,HDperms90,HEperms90),ind=c(rep(1,100),rep(2,100),rep(3,100),rep(4,100)))
-plot(jitter(plotperm$ind,0.3),plotperm$perms,cex=1,ylim=c(50000,55500),lwd=0.5,col='grey',xlab='Species',ylab=expression('Missense outliers x'~10^3),axes=F,xlim=c(0.4,4.5))
+plot(jitter(plotperm$ind,0.3),plotperm$perms,cex=1,ylim=c(50000,55500),lwd=0.5,col='grey',xlab='Species',ylab=expression('Nonsynonymous outliers x'~10^3),axes=F,xlim=c(0.4,4.5))
 axis(1,at=1:4,labels=c('HA','HC','HD','HE'))
 axis(2,at=c(50000,52000,54000),labels=c(50,52,54))
 points(1:4,c(HAobs90,HCobs90,HDobs90,HEobs90),cex=1,col='red',pch=19)
@@ -494,15 +471,12 @@ getPerm<-function(P1P2,P1P3,P1P4,P2P3,P2P4,P3P4,pis,edges,reps=10,k=10){
 }
 
 PBS<-data.frame(row.names=paste(HA.HC$chr,HA.HC$start,sep=':'),chr=HA.HC$chr)
-PBS$chr<-factor(PBS$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
-PBS$chr[is.na(PBS$chr)]<-'unplaced'
+# PBS$chr<-factor(PBS$chr,levels=c(paste('chr',1:14,sep=''),'unplaced'))
+# PBS$chr[is.na(PBS$chr)]<-'unplaced'
 PBS$HA<-meanPBS[,1]
 PBS$HC<-meanPBS[,2]
 PBS$HD<-meanPBS[,3]
 PBS$HE<-meanPBS[,4]
-PBS$chrcol<-c(grey(0.2),grey(0.4))[1+as.numeric(PBS$chr)%%2]
-PBS$chrcol[PBS$chr=='unplaced']<-grey(0.7)
-PBS$chrcolsave<-PBS$chrcol
 
 # perms<-getPerm(HA.HC,HA.HD,HA.HE,HC.HD,HC.HE,HD.HE, pis=meanPi,edges=edges,reps=10,k=10)
 # permHA<-perms[,1,]
@@ -522,11 +496,19 @@ outlpadjHC<-p.adjust(2*pmin((1-ecdf.HC(PBS$HC)),ecdf.HC(PBS$HC)),method='BH')
 outlpadjHD<-p.adjust(2*pmin((1-ecdf.HD(PBS$HD)),ecdf.HD(PBS$HD)),method='BH')
 outlpadjHE<-p.adjust(2*pmin((1-ecdf.HE(PBS$HE)),ecdf.HE(PBS$HE)),method='BH')
 
+PBS$chrcol<-c(grey(0.2),grey(0.6))[1+as.numeric(factor(PBS$chr,levels=unique(PBS$chr)))%%2]
+PBS$chrnum<-(as.numeric(gsub('chr','',PBS$chr)))
+PBS$chrcol[!is.na(PBS$chrnum)]<-c(grey(0.2),grey(0.6))[1+PBS$chrnum[!is.na(PBS$chrnum)]%%2]
+PBS$chrnum[is.na(PBS$chrnum)]<-15
+# PBS$chrcol[PBS$chr=='unplaced']<-grey(0.7)
+PBS$chrcolsave<-PBS$chrcol
 PBS$colchrom<-rainbow(11,v=0.8)[1+as.numeric(factor(HA.HC$chr))%%11]
 overplot<-which(outlpadjHE<0.05&PBS$HE>mean(PBS$HE,na.rm=T))
 PBS$chrcol[overplot]<-PBS$colchrom[overplot]
-PBS$chrnum<-(as.numeric(gsub('chr','',PBS$chr)))
-PBS$chrnum[is.na(PBS$chrnum)]<-15
+PBS$chrcol[PBS$chrcol=='#CC6F00FF']<-'orange'
+PBS$chrcol[PBS$chrcol=='#00CC25FF']<-'magenta'
+PBS$chrlab<-PBS$chrnum
+PBS$chrlab[PBS$chrlab==15]<-'unplaced'
 PBS$start<-HA.HC$start
 
 PBS$HAcol=PBS$chrcolsave
@@ -598,29 +580,122 @@ HD.rollpi<-rollapply(piHD$tP,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov
 HE.rollpi<-rollapply(piHE$tP,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
 HD.HE.rollpi<-(HD.rollpi+HE.rollpi)/2
 
-png('../Figures/Figure2.png',width=6,height=4,res=300,units='in')
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')
-layout(rbind(c(1,1,1),c(2,3,4)))
-plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.8))
+png('../Figures/Figure2.png',width=8,height=10,res=300,units='in')
+par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(5,1))
+layout(mat=matrix(data=1:5,nrow=5,ncol=1),heights=c(1,rep(0.5,4)))
+plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='',axes=F,cex=0.5,ylim=c(0,1.8))
 axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
+chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chrnum,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('A',adj=0)
 text(19600,1.8,labels='HES1')
 text(34100,1.18,labels='HES2')
 
-plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HA~vs.~HE~pi[b]),ylab=expression(pi[w]))
-points(HA.HE.rolldxy[overplot],HA.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+overplots<-1:nrow(PBS)%in%overplot
+names(overplots)<-rownames(PBS)
+over2<-which(overplots[rownames(plotPBS)])
+
+plot(HA.rollpi[match(rownames(plotPBS),piHA$winpos)],col=plotPBS$chrcol,ylab=expression(HA~pi[w]),xlab='',axes=F,cex=0.5)
+axis(2)
+points(over2,HA.rollpi[match(rownames(plotPBS),piHA$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('B',adj=0)
 
-plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HC~vs.~HE~pi[b]),ylab=expression(pi[w]))
-points(HC.HE.rolldxy[overplot],HC.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+plot(HC.rollpi[match(rownames(plotPBS),piHC$winpos)],col=plotPBS$chrcol,ylab=expression(HC~pi[w]),xlab='',axes=F,cex=0.5)
+axis(2)
+points(over2,HC.rollpi[match(rownames(plotPBS),piHC$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('C',adj=0)
 
-plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HD~vs.~HE~pi[b]),ylab=expression(pi[w]))
-points(HD.HE.rolldxy[overplot],HD.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+plot(HD.rollpi[match(rownames(plotPBS),piHD$winpos)],col=plotPBS$chrcol,ylab=expression(HD~pi[w]),xlab='',axes=F,cex=0.5)
+axis(2)
+points(over2,HD.rollpi[match(rownames(plotPBS),piHD$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('D',adj=0)
 
+plot(HE.rollpi[match(rownames(plotPBS),piHE$winpos)],col=plotPBS$chrcol,ylab=expression(HE~pi[w]), xlab='Genomic position (100 kb window, 10 kb step)',cex=0.5,axes=F)
+axis(2)
+points(over2,HE.rollpi[match(rownames(plotPBS),piHE$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+title('E',adj=0)
+
+# plot(HA.HE.rolldxy[nsites>50000],HA.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HA~vs.~HE~pi[b]),ylab=expression(pi[w]))
+# points(HA.HE.rolldxy[overplot],HA.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+# title('B',adj=0)
+
+# plot(HC.HE.rolldxy[nsites>50000],HC.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HC~vs.~HE~pi[b]),ylab=expression(pi[w]))
+# points(HC.HE.rolldxy[overplot],HC.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+# title('C',adj=0)
+
+# plot(HD.HE.rolldxy[nsites>50000],HD.HE.rollpi[nsites>50000],col=PBS$chrcol[nsites>50000],cex=0.5,xlab=expression(HD~vs.~HE~pi[b]),ylab=expression(pi[w]))
+# points(HD.HE.rolldxy[overplot],HD.HE.rollpi[overplot],col=PBS$chrcol[overplot],cex=0.5)
+# title('D',adj=0)
+
+dev.off()
+
+
+#########
+#Figure S4
+########
+png('../Figures/FigureS4.png',width=12,height=10,res=300,units='in')
+par(mar=c(3,6,2,1),mgp=c(3,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfcol=c(4,2))
+
+HA.taj<-rollapply(piHA$Tajima,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HC.taj<-rollapply(piHC$Tajima,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HD.taj<-rollapply(piHD$Tajima,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HE.taj<-rollapply(piHE$Tajima,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+
+plot(HA.taj[match(rownames(plotPBS),piHA$winpos)],col=plotPBS$chrcol,ylab="TajimaD",xlab='',axes=F)
+axis(2)
+points(over2,HA.taj[match(rownames(plotPBS),piHA$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+mtext('HA',side=2,line=4,las=3)
+
+plot(HC.taj[match(rownames(plotPBS),piHC$winpos)],col=plotPBS$chrcol,ylab="TajimaD",xlab='',axes=F)
+axis(2)
+points(over2,HC.taj[match(rownames(plotPBS),piHC$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+mtext('HC',side=2,line=4,las=3)
+
+plot(HD.taj[match(rownames(plotPBS),piHD$winpos)],col=plotPBS$chrcol,ylab="TajimaD",xlab='',axes=F)
+axis(2)
+points(over2,HD.taj[match(rownames(plotPBS),piHD$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+mtext('HD',side=2,line=4,las=3)
+
+
+plot(HE.taj[match(rownames(plotPBS),piHE$winpos)],col=plotPBS$chrcol,ylab="TajimaD", xlab='Genomic position (100 kb window, 10 kb step)',,axes=F)
+axis(2)
+points(over2,HE.taj[match(rownames(plotPBS),piHE$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+mtext('HE',side=2,line=4,las=3)
+
+
+HA.fayh<-rollapply(piHA$fayh,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HC.fayh<-rollapply(piHC$fayh,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HD.fayh<-rollapply(piHD$fayh,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+HE.fayh<-rollapply(piHE$fayh,width=10,FUN=sum,na.rm=T,fill=NA)/rollapply(goodcov[,4],FUN=sum,na.rm=T,width=10,fill=NA)
+
+
+plot(HA.fayh[match(rownames(plotPBS),piHA$winpos)],col=plotPBS$chrcol,ylab="FayWuH",xlab='',axes=F)
+axis(2)
+points(over2,HA.fayh[match(rownames(plotPBS),piHA$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(HC.fayh[match(rownames(plotPBS),piHC$winpos)],col=plotPBS$chrcol,ylab="FayWuH",xlab='',axes=F)
+axis(2)
+points(over2,HC.fayh[match(rownames(plotPBS),piHC$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(HD.fayh[match(rownames(plotPBS),piHD$winpos)],col=plotPBS$chrcol,ylab="FayWuH",xlab='',axes=F)
+axis(2)
+points(over2,HD.fayh[match(rownames(plotPBS),piHD$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(HE.fayh[match(rownames(plotPBS),piHE$winpos)],col=plotPBS$chrcol,ylab="FayWuH", xlab='Genomic position (100 kb window, 10 kb step)',,axes=F)
+axis(2)
+points(over2,HE.fayh[match(rownames(plotPBS),piHE$winpos)][over2],col=plotPBS$chrcol[over2])
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 dev.off()
 
 
@@ -628,33 +703,105 @@ dev.off()
 #Figure S1
 ###############################
 
+
+#########################
+
+getTopo<-function(tree){
+	tip<-which(tree$tip.label=='HE')
+	tree$tip.label[tree$edge[(tree$edge[,1]==tree$edge[tree$edge[,2]==tip,1]) & tree$edge[,2]<5 & tree$edge[,2]!=tip,2]]
+}
+
+drawTree<-function(x,y,lab,h,v,t){
+	segments(x-h,y,x+h,y)
+	segments(x-h,y,x-(2*h),y+v)
+	segments(x-h,y,x-(2*h),y-v)
+	segments(x+h,y,x+(2*h),y+v)
+	segments(x+h,y,x+(2*h),y-v)
+	text(c(x-(2*h)-t,x-(2*h)-t,x+(2*h)+t,x+(2*h)+t),c(y-v,y+v,y-v,y+v),labels=lab)
+}
+
+
+topos<-sapply(trees,getTopo)
+library(plotrix)
+coverage<-(altref$PF_ALIGNED_BASES/430000000)[match(samps,meta$filename)]
+
+png('../Figures/FigureS1.png',width=8,height=10,res=300,units='in')
+par(mar=c(3,4,2,1),mgp=c(1.5,0.1,0),tck=-0.01)
+layout(mat=rbind(c(1,2),c(3,3),c(4,4),c(5,5),c(6,6)))
+
+multhist(list(coverage[meta$cryp=='HA'],coverage[meta$cryp=='HC'],coverage[meta$cryp=='HD'],coverage[meta$cryp=='HE']),col=crypcol,xlab='Sequencing coverage',ylab='Count')
+legend('topright',legend=c('HA','HC','HD','HE'),fill=crypcol,bty='n')
+title('A',adj=0)
+
+barplot(as.matrix(table(topos)),ylab='Counts',xlim=c(0,3))
+drawTree(2,43000,c('HA','HC','HD','HE'),0.1,2000,0.2)
+drawTree(2,35000,c('HA','HD','HC','HE'),0.1,2000,0.2)
+drawTree(2,18000,c('HD','HC','HA','HE'),0.1,2000,0.2)
+title('B',adj=0)
+
+misHA<-read.delim('HA.nInd.txt',header=F,na.strings='.')
+rownames(misHA)<-paste(misHA$V1,misHA$V2,sep=':')
+misHC<-read.delim('HC.nInd.txt',header=F,na.strings='.')
+rownames(misHC)<-paste(misHC$V1,misHC$V2,sep=':')
+misHD<-read.delim('HD.nInd.txt',header=F,na.strings='.')
+rownames(misHD)<-paste(misHD$V1,misHD$V2,sep=':')
+misHE<-read.delim('HE.nInd.txt',header=F,na.strings='.')
+rownames(misHE)<-paste(misHE$V1,misHE$V2,sep=':')
+
+plot(misHA$V4[match(rownames(plotPBS),rownames(misHA))],col=plotPBS$chrcol,ylab='Mean HA individuals per site',xlab='',axes=F,cex=0.5)
+title('C',adj=0)
+points(over2,misHA$V4[match(rownames(plotPBS),rownames(misHA))][over2],col=plotPBS$chrcol[over2])
+axis(2)
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(misHC$V4[match(rownames(plotPBS),rownames(misHC))],col=plotPBS$chrcol,ylab='Mean HC individuals per site',xlab='',axes=F,cex=0.5)
+points(over2,misHC$V4[match(rownames(plotPBS),rownames(misHC))][over2],col=plotPBS$chrcol[over2])
+axis(2)
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(misHD$V4[match(rownames(plotPBS),rownames(misHD))],col=plotPBS$chrcol,ylab='Mean HD individuals per site',xlab='',axes=F,cex=0.5)
+points(over2,misHD$V4[match(rownames(plotPBS),rownames(misHD))][over2],col=plotPBS$chrcol[over2])
+axis(2)
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+plot(misHE$V4[match(rownames(plotPBS),rownames(misHE))],col=plotPBS$chrcol,ylab='Mean HE individuals per site',xlab='',axes=F,cex=0.5)
+points(over2,misHE$V4[match(rownames(plotPBS),rownames(misHE))][over2],col=plotPBS$chrcol[over2])
+axis(2)
+axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
+
+
+dev.off()
+
+
+
+################################
+#Figure S3
+###############################
+
+
 png('../Figures/FigureS3.png',width=6,height=6,res=300,units='in')
 par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(4,1))
 plot(plotPBS$HA,col=plotPBS$HAcol,ylab='HA PBS',xlab='',axes=F,cex=0.5,ylim=c(0,1.7))
 points(which(plotPBS$HAoutl),plotPBS$HA[plotPBS$HAoutl],col=plotPBS$HAcol[plotPBS$HAoutl],cex=0.5)
 axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('A',adj=0)
 
 plot(plotPBS$HC,col=plotPBS$HCcol,ylab='HC PBS',xlab='',axes=F,cex=0.5,ylim=c(0,1.7))
 points(which(plotPBS$HCoutl),plotPBS$HC[plotPBS$HCoutl],col=plotPBS$HCcol[plotPBS$HCoutl],cex=0.5)
 axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('B',adj=0)
 
 plot(plotPBS$HD,col=plotPBS$HDcol,ylab='HD PBS',xlab='',axes=F,cex=0.5,ylim=c(0,1.7))
 points(which(plotPBS$HDoutl),plotPBS$HD[plotPBS$HDoutl],col=plotPBS$HDcol[plotPBS$HDoutl],cex=0.5)
 axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('C',adj=0)
 
 plot(plotPBS$HE,col=plotPBS$chrcol,ylab='HE PBS',xlab='Genomic position  (100 kb window, 10 kb step)',axes=F,cex=0.5,ylim=c(0,1.7))
 points(which(plotPBS$HEoutl),plotPBS$HE[plotPBS$HEoutl],col=plotPBS$chrcol[plotPBS$HEoutl],cex=0.5)
 axis(2)
-chrlab<-aggregate((1:nrow(plotPBS))~plotPBS$chr,FUN=mean)
 axis(1,labels=c(1:14,'unplaced'),at=chrlab[,2],lwd=0)
 title('D',adj=0)
 
@@ -727,7 +874,7 @@ g7$height<-rep(c(6,6.3,6.6,6.9,7.2,7.5,7.8,8.1),10)[1:nrow(g7)]
 segments(g7[,4],g7$height,g7[,5],g7$height)
 text((g7[,4]+g7[,5])/2,g7$height+0.13,labels=g7$gene2,cex=0.5,font=1+as.numeric(g7$de))
 title('A',adj=0)
-legend('topleft',legend='missense SNPs',fill='darkred',bty='n',cex=0.7)
+legend('topleft',legend='nonsynonymous SNPs',fill='darkred',bty='n',cex=0.7)
 
 L2<-PBS[HA.HC$chr=='Sc0000015'&PBS$start>=2350000&PBS$start<2650000,]
 L2sns<-sns[sns$chr=='Sc0000015'&sns$pos>=2350000&sns$pos<2650000&sns$missense,]
@@ -742,7 +889,7 @@ gs$height<-rep(c(2.4,2.6,2.8,3.2,3.4,3.6,3.8,4,4.2),10)[1:nrow(gs)]
 segments(gs[,4],gs$height,gs[,5],gs$height)
 text((gs[,4]+gs[,5])/2,gs$height+0.1,labels=gs$gene2,cex=0.5,font=1+as.numeric(gs$de))
 title('B',adj=0)
-legend('topleft',legend='missense SNPs',fill='darkred',bty='n',cex=0.7)
+legend('topleft',legend='nonsynonymous SNPs',fill='darkred',bty='n',cex=0.7)
 
 bleachcol<-crypcols
 bleachcol[meta$binbl==1]<-grey(0.9)
@@ -765,13 +912,18 @@ arrows(3.6,-0.05,3.3,-0.05,length=0.05,lwd=1)
 
 dev.off()
 
+############
+
+############
+
+
 
 ######
 cryp1<-ape::read.dna(gzfile('chr1.fna.gz'),format='fasta')
 cryp2<-ape::read.dna(gzfile('chr2.fna.gz'),format='fasta')
 
 png('../Figures/Figure4.png',width=5,height=6,res=300,units='in')
-par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(3,2),font.main=1)
+par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l',mfrow=c(3,2))
 
 Amillepora12599<-read.tree('proteins/Amillepora12599.new')
 Amillepora12599$tip.label[5]<-'A. mil.'
@@ -791,7 +943,7 @@ locus1cryp<-ape::read.dna('Locus1.fna',format='fasta')
 locus1dist<-dist.dna(locus1cryp,model='raw')
 locus1.nj<-bionj(locus1dist)
 locus1.nj$tip.label[1]<-'A. mil.'
-plot(locus1.nj,type='u',main='HES1')
+plot(locus1.nj,type='u',main='HES1',font.main=1)
 segments(0,0.02,0.002,0.02,lwd=1)
 text(0.0025,0.023,labels='0.5%')
 title('C',adj=0)
@@ -800,7 +952,7 @@ locus2cryp<-ape::read.dna('Locus2.fna',format='fasta')
 locus2dist<-dist.dna(locus2cryp,model='raw')
 locus2.nj<-bionj(locus2dist)
 locus2.nj$tip.label[1]<-'A. mil.'
-plot(locus2.nj,type='u',main='HES2')
+plot(locus2.nj,type='u',main='HES2',font.main=1)
 segments(0.005,0.002,0.005,0.007,lwd=1)
 text(0.0065,0.0045,labels='0.5%')
 title('D',adj=0)
@@ -808,7 +960,7 @@ title('D',adj=0)
 crypdist<-dist.dna(cryp1,model='raw')
 cryp.nj<-bionj(crypdist)
 cryp.nj$tip.label[1]<-'A. mil.'
-plot(cryp.nj,type='u',main='Chromosome 1')
+plot(cryp.nj,type='u',main='Chromosome 1',font.main=1)
 segments(0,0.003,0.005,0.003,lwd=1)
 text(0.0025,0.004,labels='0.5%')
 title('E',adj=0)
@@ -816,7 +968,7 @@ title('E',adj=0)
 crypdist<-dist.dna(cryp2,model='raw')
 cryp.nj<-bionj(crypdist)
 cryp.nj$tip.label[1]<-'A. mil.'
-plot(cryp.nj,type='u',main='Chromosome 2')
+plot(cryp.nj,type='u',main='Chromosome 2',font.main=1)
 segments(0,0.01,0.005,0.01,lwd=1)
 text(0.0025,0.011,labels='0.5%')
 title('F',adj=0)
@@ -825,7 +977,7 @@ dev.off()
 
 
 ################
-# Figure S2
+# Figure S4
 ##################
 
 tmf<-read.delim('tmf_counts.txt',header=F)
@@ -834,15 +986,26 @@ tmf$cryp<-meta$cryp[match(tmf[,1],as.character(meta$tag))]
 cor(tmf$loc,tmf[,2],use='p')
 anova(lm(tmf[,2]~tmf$cryp+tmf$loc))
 
-png('../Figures/FigureS4.png',width=3,height=3,res=300,units='in')
-par(mar=c(3,2,1,1),tck=-0.01,mgp=c(1.1,.1,0),bty='l')
+png('../Figures/FigureS5.png',width=6,height=3,res=300,units='in')
+par(mfrow=c(1,2),mar=c(3,2,1,1),tck=-0.01,mgp=c(1.1,.1,0),bty='l')
+
+hes2m<-read.delim('Sc0000015:2380000-2590000.mafs.gz',header=T)
+hes2w<-read.delim('Sc0000015:2380000-2590000.weights.npy.txt',sep=' ',header=F)
+plot(hes2m$position,hes2w$V1,xlab='Sc0000015 position (Mb)',ylab='PC1 HES2 SNP weight',axes=F,cex=0.5)
+axis(1,at=c(2.4e6,2.45e6,2.5e6,2.55e6),labels=c(2.4,2.45,2.5,2.55))
+box(bty='l')
+title(main='A',adj=0)
+
+
 plot(tmf$loc,tmf[,2],bg='black',col=crypcols[match(tmf[,1],as.character(meta$tag))],pch=19,xlab='PC1 HES2',ylab='TMF norm. counts')
 abline(lm(tmf[,2]~tmf$loc),lwd=2,lty=2)
 legend('topleft',legend=c('HC','HE'),fill=crypcol[c(2,4)],bty='n')
+title(main='B',adj=0)
+
 dev.off()
 
 ###############
-# Figure S3
+# Figure S5
 ###############
 
 old<-read.delim('Rose2017meta.txt')
@@ -854,12 +1017,12 @@ symfst$outl<-rownames(symfst)%in%winpos[overplot]
 symfst$chrnum<-(as.numeric(gsub('chr','',symfst$chr)))
 symfst$chrnum[is.na(symfst$chrnum)]<-15
 symfst$chrcol<-c(grey(0.2),grey(0.4))[1+symfst$chrnum%%2]
-symfst$chrcol[symfst$chrnum==15]<-grey(0.7)
+# symfst$chrcol[symfst$chrnum==15]<-grey(0.7)
 symfst$colchrom<-rainbow(11,v=0.8)[1+as.numeric(factor(symfst$chr))%%11]
 symfst$chrcol[which(symfst$outl)]<-symfst$colchrom[which(symfst$outl)]
 symfst<-symfst[order(symfst$chrnum),]
 
-png('../Figures/FigureS5.png',width=6,height=3,res=300,units='in')
+png('../Figures/FigureS6.png',width=6,height=3,res=300,units='in')
 par(mar=c(3,3,2,1),mgp=c(1.7,0.1,0),las=1,tck=0.01,cex.axis=1,lwd=1,bty='l')
 layout(t(as.matrix(c(1,1,2))))
 
